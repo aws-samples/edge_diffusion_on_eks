@@ -18,15 +18,15 @@ The proposal herein deploys a dedicated game server as a k8s pod with `hostnetwo
 ``` python
 def get_rand_port():
 # Attempting to get random port
-try:
-s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(('',0))
-except socket.error as msg:
-print 'bind failed. Error is '+str(msg[0])+' Msg '+msg[1]
-print 'socket bind complete '
-port=s.getsockname()[1]
-s.close()
-return port
+  try:
+    s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('',0))
+  except socket.error as msg:
+    print 'bind failed. Error is '+str(msg[0])+' Msg '+msg[1]
+    print 'socket bind complete '
+    port=s.getsockname()[1]
+    s.close()
+  return port
 ```
 
 The proposed spec uses a [Deployment](https://github.com/aws-samples/spotable-game-server/blob/master/specs/minecraft-gs-r1-12-deploy.yaml) k8s resource type that uses standard  `containers` environment variables defining the game-server init parameters. 
@@ -36,21 +36,21 @@ We used SQS as a mechanism to mediate between the game-server and external syste
 
 ``` yaml
 {
-"Version": "2012-10-17",
-"Statement": [
-{
-"Effect": "Allow",
-"Action": [
-"sqs:ReceiveMessage",
-"sqs:DeleteMessage",
-"sqs:GetQueueAttributes",
-"logs:CreateLogGroup",
-"logs:CreateLogStream",
-"logs:PutLogEvents"
-],
-"Resource": "arn:aws:sqs:region:account-id:queuename"
-}
-]
+  "Version": "2012-10-17",
+  "Statement": [
+  {
+    "Effect": "Allow",
+    "Action": [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ],
+  "Resource": "arn:aws:sqs:region:account-id:queuename"
+  }
+  ]
 }
 ```
 
