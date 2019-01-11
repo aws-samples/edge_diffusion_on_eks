@@ -2,20 +2,30 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: minecraft
+    app: minecraft-grp1
     release: r1.12 
-  name: minecraft
+  name: minecraft-grp1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: minecraft
+      app: minecraft-grp1
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: minecraft
+        app: minecraft-grp1
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                      - minecraft-grp1
+              topologyKey: "kubernetes.io/hostname"
       nodeSelector:
         lifecycle: spot
         title: minecraft
