@@ -23,13 +23,13 @@ queue = sqs_cli.get_queue_by_name(QueueName=queuename)
 
 def sigterm_handler(_signo, _stack_frame):
     print 'in sigterm_handler'
-    publish_game_server_status('terminating')
+    publish_game_server_status('terminating','gs')
       
 
-def publish_game_server_status(status):
-    print 'in publish_game_server_status with hostname='+public_hostname+' port='+str(public_port)+' region='+region+' status='+status
+def publish_game_server_status(statusi,server_type):
+    print 'in publish_game_server_status with hostname='+public_hostname+' port='+str(public_port)+' region='+region+' status='+status+' type='+server_type
     data=[]
-    data.append({'public_hostname':public_hostname,'public_port':public_port,'region':region,'status':status}) 
+    data.append({'public_hostname':public_hostname,'public_port':public_port,'region':region,'status':status,'type':server_type}) 
     print str(data)
     try: 
        # Send the message to the queue 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
   print 'about to launch the game server '+public_hostname 
 
   # Publishing game-server init status
-  publish_game_server_status('init')
+  publish_game_server_status('init','gs')
 
   # Starting the game-server 
   subprocess.call(['/start'])
