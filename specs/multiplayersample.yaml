@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: multiplayersample
+    release: r1
+  name: multiplayersample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multiplayersample
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: multiplayersample
+    spec:
+      nodeSelector:
+        lifecycle: spot
+      containers:
+      - env:
+        - name: GROUP
+          value: "multiplayersample-grp1"
+        - name: QUEUENAME
+          value: "serverstatus"
+        image: 356566070122.dkr.ecr.us-west-2.amazonaws.com/multiplayersample-build
+        imagePullPolicy: Always
+        name: multiplayersample
+        command: ["/start.py"]
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+      hostNetwork: true
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
