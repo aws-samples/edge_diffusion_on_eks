@@ -20,6 +20,8 @@ spec:
         lifecycle: spot
       containers:
       - env:
+        - name: CONSOLE_ADDR
+          value: "52.10.30.199"
         - name: GROUP
           value: "multiplayersample-grp1"
         - name: QUEUENAME
