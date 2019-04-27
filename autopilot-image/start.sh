@@ -1,5 +1,5 @@
-#!/bin/bash
-source ./export_locally.sh
+#!/bin/sh -x
+#source ./export_locally.sh
 echo "Starting the game server auto-pilot"
 
 # This process runs as daemon set per game server deployment. It attempt to get the required number of game-servers within a region.
@@ -38,8 +38,8 @@ if [ "${NEW_SIZE_METRIC_NAME}" == "" ]; then
   exit 1
 fi
 
-if [ "${SLEEP_TIME_B4_NEXT_READ}" == "" ]; then
-  echo '[ERROR] Environment variable `SLEEP_TIME_B4_NEXT_READ` has no value set.' 1>&2
+if [ "${FREQUENCY}" == "" ]; then
+  echo '[ERROR] Environment variable `FREQUENCY` has no value set.' 1>&2
   exit 1
 fi
 
@@ -53,10 +53,10 @@ do
   echo NEW_RS_SIZE=${NEW_RS_SIZE}
   #End testing section
 
-  CURRENT_RS_SIZE=`kubectl get deploy ${DEPLOY_NAME} -o=jsonpath='{.status.availableReplicas}'`
+  CURRENT_RS_SIZE=`kubectl get deploy ${DEPLOY_NAME} -n ${NAMESPACE} -o=jsonpath='{.status.availableReplicas}'`
   echo CURRENT_RS_SIZE=${CURRENT_RS_SIZE}
 
-  kubectl scale deploy/${DEPLOY_NAME} --replicas=${NEW_RS_SIZE}
+  kubectl scale deploy/${DEPLOY_NAME} --replicas=${NEW_RS_SIZE} -n ${NAMESPACE}
   echo "sleeping for ${SLEEP_TIME_B4_NEXT_READ} to allow the scale operations"
 
   MESSAGE="[{'type': 'autopilot','deployment':${DEPLOY},'current_rs_size': ${CURRENT_RS_SIZE},'new_rs_size':${NEW_RS_SIZE},'region':'us-west-2'}]"
@@ -65,6 +65,6 @@ do
   aws cloudwatch put-metric-data --metric-name ${CURRENT_SIZE_METRIC_NAME} --namespace ${DEPLOY_NAME} --value ${CURRENT_RS_SIZE}
   aws cloudwatch put-metric-data --metric-name ${NEW_SIZE_METRIC_NAME} --namespace ${DEPLOY_NAME} --value ${NEW_RS_SIZE}
 
-  sleep ${SLEEP_TIME_B4_NEXT_READ}
+  sleep ${FREQUENCY}
 
 done
