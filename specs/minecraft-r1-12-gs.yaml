@@ -1,13 +1,14 @@
-apiVersion: stable.example.com/v1
+apiVersion: "stable.agones.dev/v1alpha1"
 kind: GameServer
 metadata:
-  labels:
-    app: minecraft
-    release: r1.12 
-  name: minecraft
+  generateName: "minecraft-gs"  
 spec:
-      replicas: 5
-      image: 356566070122.dkr.ecr.us-west-2.amazonaws.com/minecraft-server
+  ports:
+  - name: default
+    portPolicy: Dynamic
+    containerPort: 7654
+  template:
+    spec:
       containers:
       - env:
         - name: QUEUENAME
@@ -69,7 +70,7 @@ spec:
           value: -Xmx512M -Xms512M
         image: 356566070122.dkr.ecr.us-west-2.amazonaws.com/minecraft-server
         imagePullPolicy: Always
-        name: minecraft-r1-12
+        name: minecraft-r1-12-gs
         command: ["/start.py"]
         resources:
           requests:
