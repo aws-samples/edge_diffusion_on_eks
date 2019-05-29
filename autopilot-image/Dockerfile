@@ -4,6 +4,7 @@ RUN curl -f -s -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernet
     chmod +x /usr/local/bin/kubectl && \
     kubectl version --client
 RUN apk -Uuv add groff less python py-pip
+RUN apk add jq
 RUN pip install awscli
 COPY start.sh /
 RUN chmod +x /start.sh

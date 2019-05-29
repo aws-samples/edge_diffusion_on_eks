@@ -53,6 +53,13 @@ do
   echo NEW_RS_SIZE=${NEW_RS_SIZE}
   #End testing section
 
+  #Getting predictions from a trained model
+  MODEL_URL="https://gf8nwoay7d.execute-api.us-west-2.amazonaws.com/api/predict"
+  MODEL_URL_PARAM="ap-northeast-1"
+  NEW_RS_SIZE_FLOAT=`curl -w "\n" $MODEL_URL/$MODEL_URL_PARAM | jq '.Prediction.num_of_gameservers'`
+  NEW_RS_SIZE=${NEW_RS_SIZE_FLOAT%.*}
+  echo $NEW_RS_SIZE
+
   CURRENT_RS_SIZE=`kubectl get deploy ${DEPLOY_NAME} -n ${NAMESPACE} -o=jsonpath='{.status.availableReplicas}'`
   echo CURRENT_RS_SIZE=${CURRENT_RS_SIZE}
 
