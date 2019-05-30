@@ -66,11 +66,15 @@ do
   kubectl scale deploy/${DEPLOY_NAME} --replicas=${NEW_RS_SIZE} -n ${NAMESPACE}
   echo "sleeping for ${SLEEP_TIME_B4_NEXT_READ} to allow the scale operations"
 
+  NUM_NODES=`kubectl get nodes -o json | jq '.items[].metadata.labels.title'| grep ${DEPLOY_NAME} | wc -l`
+  echo NUM_NODES=${NUM_NODES}
+
   MESSAGE="[{'type': 'autopilot','deployment':${DEPLOY},'current_rs_size': ${CURRENT_RS_SIZE},'new_rs_size':${NEW_RS_SIZE},'region':'us-west-2'}]"
   MESSAGE_GRP_ID="gsGrp_us-west-2"
   aws sqs send-message --queue-url ${QUEUE_URL} --message-body "${MESSAGE}" --message-group-id ${MESSAGE_GRP_ID}
   aws cloudwatch put-metric-data --metric-name ${CURRENT_SIZE_METRIC_NAME} --namespace ${DEPLOY_NAME} --value ${CURRENT_RS_SIZE}
   aws cloudwatch put-metric-data --metric-name ${NEW_SIZE_METRIC_NAME} --namespace ${DEPLOY_NAME} --value ${NEW_RS_SIZE}
+  aws cloudwatch put-metric-data --metric-name num_of_nodes --namespace ${DEPLOY_NAME} --value ${NUM_NODES}
 
   sleep ${FREQUENCY}
 

@@ -80,7 +80,7 @@ spec:
         - name: DEPLOY_NAME
           value: "minecraft"
         - name: CURRENT_SIZE_METRIC_NAME
-          value: "current_size"
+          value: "num_of_gs"
         - name: NEW_SIZE_METRIC_NAME
           value: "new_size"
         - name: FREQUENCY
