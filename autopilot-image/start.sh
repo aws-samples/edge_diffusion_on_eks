@@ -43,23 +43,33 @@ if [ "${FREQUENCY}" == "" ]; then
   exit 1
 fi
 
+if [ "${MIN_GS_NUM}" == "" ]; then
+  echo '[ERROR] Environment variable `MIN_GS_NUM` has no value set.' 1>&2
+  exit 1
+fi
+
 while true
 do
 
   #Testing only - generating random size for replica set. Realworld solution will get this number from an AI/ML endpoint
-  NEW_RS_SIZE=$RANDOM
-  RANGE=30
-  let "NEW_RS_SIZE %= $RANGE"
-  echo NEW_RS_SIZE=${NEW_RS_SIZE}
+  #NEW_RS_SIZE=$RANDOM
+  #RANGE=30
+  #let "NEW_RS_SIZE %= $RANGE"
+  #echo NEW_RS_SIZE=${NEW_RS_SIZE}
   #End testing section
 
   #Getting predictions from a trained model
-  MODEL_URL="https://gf8nwoay7d.execute-api.us-west-2.amazonaws.com/api/predict"
-  MODEL_URL_PARAM="ap-northeast-1"
+  #MODEL_URL="https://gf8nwoay7d.execute-api.us-west-2.amazonaws.com/api/predict"
+  #MODEL_URL_PARAM="ap-southeast-2"
+  MODEL_URL="https://z4ynfcwzdb.execute-api.us-west-2.amazonaws.com/api/currsine2h/"
+  MODEL_URL_PARAM="/"
   NEW_RS_SIZE_FLOAT=`curl -w "\n" $MODEL_URL/$MODEL_URL_PARAM | jq '.Prediction.num_of_gameservers'`
-  NEW_RS_SIZE=${NEW_RS_SIZE_FLOAT%.*}
-  echo $NEW_RS_SIZE
-
+  if [ -n "${NEW_RS_SIZE_FLOAT}" ]; then
+    NEW_RS_SIZE=${MIN_GS_NUM}
+  else
+    NEW_RS_SIZE=${NEW_RS_SIZE_FLOAT%.*}
+  fi
+  echo NEW_RS_SIZE=${NEW_RS_SIZE}
   CURRENT_RS_SIZE=`kubectl get deploy ${DEPLOY_NAME} -n ${NAMESPACE} -o=jsonpath='{.status.availableReplicas}'`
   echo CURRENT_RS_SIZE=${CURRENT_RS_SIZE}
 

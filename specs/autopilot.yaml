@@ -85,6 +85,8 @@ spec:
           value: "new_size"
         - name: FREQUENCY
           value: "600"
+        - name: MIN_GS_NUM
+          value: "10"
         - name: QUEUE_URL
           value: "https://sqs.us-west-2.amazonaws.com/356566070122/gameserver.fifo"
         - name: POD_NAME
