@@ -65,9 +65,10 @@ do
   MODEL_URL_PARAM="/"
   NEW_RS_SIZE_FLOAT=`curl -w "\n" $MODEL_URL/$MODEL_URL_PARAM | jq '.Prediction.num_of_gameservers'`
   if [ -n "${NEW_RS_SIZE_FLOAT}" ]; then
-    NEW_RS_SIZE=${MIN_GS_NUM}
-  else
     NEW_RS_SIZE=${NEW_RS_SIZE_FLOAT%.*}
+  else
+    echo "api returned null, setting rs default="${MIN_GS_NUM}
+    NEW_RS_SIZE=${MIN_GS_NUM}
   fi
   echo NEW_RS_SIZE=${NEW_RS_SIZE}
   CURRENT_RS_SIZE=`kubectl get deploy ${DEPLOY_NAME} -n ${NAMESPACE} -o=jsonpath='{.status.availableReplicas}'`
