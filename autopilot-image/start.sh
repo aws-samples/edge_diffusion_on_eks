@@ -61,7 +61,7 @@ do
   #Getting predictions from a trained model
   #MODEL_URL="https://gf8nwoay7d.execute-api.us-west-2.amazonaws.com/api/predict"
   #MODEL_URL_PARAM="ap-southeast-2"
-  MODEL_URL="https://z4ynfcwzdb.execute-api.us-west-2.amazonaws.com/api/currsine2h/"
+  MODEL_URL="https://4bfiebw6ui.execute-api.us-west-2.amazonaws.com/api/currsine24h"
   MODEL_URL_PARAM="/"
   NEW_RS_SIZE_FLOAT=`curl -w "\n" $MODEL_URL/$MODEL_URL_PARAM | jq '.Prediction.num_of_gameservers'`
   if [ -n "${NEW_RS_SIZE_FLOAT}" ]; then
