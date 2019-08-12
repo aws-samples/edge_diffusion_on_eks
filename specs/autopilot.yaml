@@ -84,7 +84,7 @@ spec:
         - name: NEW_SIZE_METRIC_NAME
           value: "new_size"
         - name: FREQUENCY
-          value: "600"
+          value: "2400"
         - name: MIN_GS_NUM
           value: "10"
         - name: QUEUE_URL
