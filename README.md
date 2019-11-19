@@ -70,23 +70,19 @@ In the case of the incoming player actions are served by UDP and it is required 
 ## The Setup Process
 * Create an EKS cluster using the [Getting Started with Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html) guide. The guestbook step is recommended for sanity test but not crucial to this scenario. 
 * If an AWS Spot Instances is being used, apply [Step 3: Launch and Configure Amazon EKS Worker Nodes](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html) from the guide but with Spot ASG. 
-* One can use MixedInstancesPolicy where we allow EKS to opportunistically allocate compatibale spot instances for cost optimization.
-For that, one should use the cloud formation template with the following parameters:
-
-In our case, the Minecraft gameserver or any other gameserver exposed to the player thru ephemeral port allocated by [start.py](https://github.com/aws-samples/spotable-game-server/blob/master/minecraft-server-image/start.py). Hence `ExistingNodeSecurityGroups` should be populated with the security group that allows the network access.  
-
-check the status of the node pool create cloudformation be executing:
+* One can use MixedInstancesPolicy where we allow EKS to opportunistically allocate compatibale spot instances for cost optimization. To create a Mixed Instance Policy node group execute the command:
 
 ``` bash
-until [[ `aws cloudformation describe-stacks --stack-name "minecraft-mix-us-west2" --query "Stacks[0].[StackStatus]" --output text` == "CREATE_COMPLETE" ]]; do  echo "The stack is NOT in a state of CREATE_COMPLETE at `date`";   sleep 30; done && echo "The Stack is built at `date` - Please proceed"
+eksctl create nodegroup --config-file=eks-nodegroup-mixed-instances.yaml
 ```
+It assumes a cluster name `gs-eu-north-1` exists in region `eu-north-1`. The nodegroup will use `Lifecycle` label Spot instacnes with `Ec2Spot` and on-demand with `OnDemand` 
 
 * Add the new Worker Node Role ARN to the ConfigMap by discovering the new node role ARN using IAM console and execute [whitelist-worker-nodes.yaml](https://github.com/aws-samples/spotable-game-server/blob/master/specs/whitelist-worker-nodes.yaml)
 * Deploy the Spot signal handler as daemon set using (spot-sig-handler-ds.yaml)[https://github.com/yahavb/simple-game-server-eks/blob/master/specs/spot-sig-handler-ds.yaml]
 * Based on the node lables configured in the worker nodes provisioning set the `nodeSelector` with the proper `lifecycle` and `title` values. In out case:
 ``` yaml
 nodeSelector:
-lifecycle: spot
+lifecycle: Ec2Spot
 title: minecraft
 ```
 
