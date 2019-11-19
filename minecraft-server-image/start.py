@@ -10,16 +10,20 @@ import signal
 from ec2_metadata import ec2_metadata
 
 # global variables 
-region='us-west'
 public_hostname=''
 public_port=''
 
-# Get the service resource
-sqs_cli=boto3.resource('sqs',region_name='us-west-2')
 
 # Get the queue
+region=os.environ['REGION']
 queuename=os.environ['QUEUENAME']
-queue = sqs_cli.get_queue_by_name(QueueName=queuename)
+print('queuename {}'.format(queuename))
+print('region {}'.format(region))
+try:
+  sqs_cli=boto3.resource('sqs',region_name=region)
+  queue = sqs_cli.get_queue_by_name(QueueName=queuename)
+except Exception as e:
+  print('Error connecting to SQS {}'.format(queuename))
 
 def sigterm_handler(_signo, _stack_frame):
     print 'in sigterm_handler'
