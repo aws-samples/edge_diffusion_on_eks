@@ -213,6 +213,7 @@ class Model(object):
         except Queue.Empty:
             pass
     def execute(self, *args, **kwargs):
+        log('EXECUTE',*args,**kwargs)
         return self.connection.execute(*args, **kwargs)
     def commit(self):
         self.last_commit = time.time()
@@ -297,7 +298,7 @@ class Model(object):
         self.send_nick(client)
         self.send_nicks(client)
     def on_data(self, client, data):
-        #log('RECV', client.client_id, data)
+        log('RECV', client.client_id, data)
         args = data.split(',')
         command, args = args[0], args[1:]
         if command in self.commands:
