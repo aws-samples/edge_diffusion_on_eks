@@ -1,7 +1,7 @@
 from math import floor
 from world import World
-import Queue
-import SocketServer
+import queue
+import socketserver
 import datetime
 import random
 import re
@@ -17,73 +17,36 @@ from botocore.exceptions import ClientError
 
 dynamodb_client = boto3.client("dynamodb", region_name="us-west-2")
 
-def create_ddb_get_block_type(p,q,x,y,z):
-#select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
-    return {
-       "Statement": "select type from GameState where PK=Block' and SK like ="p+q+x+y+z
-    }
-
-def create_ddb_get_block_rowid(p,q,key):
-#select rowid, x, y, z, w from block where  p = :p and q = :q and rowid > :key;
-    return {
-       "Statement": "select rowid,x,y,z,w from GameState where PK='Block' and SK="p+q+x+y+z
-    }
-
-def create_ddb_get_light(p,q):
-#select x, y, z, w from light where p = :p and q = :q;
-    return {
-       "Statement": "select x, y, z, w from GameState where PK='Light' and SK="p+q
-    }
-
-def create_ddb_get_sign(p,q):
-#select x, y, z, face, text from sign where p = :p and q = :q;
-    return {
-        "Statement": "select x,y,z,face,text from GameState where PK='Sign' and SK="p+q
-    }
-
-def create_ddb_put_item(_type,p,q,w,x,y,z):
+def create_put_item_input(pp, qq, xx, yy, zz, ww):
+    print("create_put_item_input start")
     return {
         "TableName": "GameState",
         "Item": {
-            "PK": {"S":_type}, 
-            "SK": {"S":p+q+x+y+z+w}, 
-            "position": {"S":x+y+z}, 
-            "type": {"S":w}, 
-            "chunk": {"S":p+q}, 
-            "block": {"M": {"p": {"N":p},"q": {"N":q},"w": {"N":w},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
+            "PK": {"S":str(pp+qq+xx+yy+zz)},
+            "SK": {"S":"Block"},
+            "Block_Postion": {"L": [{"N":xx}, {"N":yy}, {"N":zz}]},
+            "Block_Type": {"N":ww},
+            "Chunk": {"L": [{"N":pp}, {"N":qq}]},
+            "Block": {"L": [{"N":pp}, {"N":qq}, {"N":xx}, {"N":yy}, {"N":zz}, {"N":ww}]}
         }
     }
 
-def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
-    return {
-        "TableName": "GameState",
-        "Item": {
-            "PK": {"S":_type}, 
-            "SK": {"S":p+q+x+y+z+face+text}, 
-            "chunk": {"S":p+q}, 
-            "sign_position": {"S":x+y+z}, 
-            "sign_face": {"S":x+y+z+face}, 
-            "sign": {"M": {"face": {"N":face},"p": {"N":p},"q": {"N":q},"text": {"N":text},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
-        }
-    }
 
-def execute_ddb_put_item(dynamodb_client, input):
+def execute_put_item(dynamodb_client, input):
     try:
-        log("INFO execute_put_item {}".format(input))
+        print("execute_put_item {}".format(input))
         response = dynamodb_client.put_item(**input)
-        log("INFO execute_put_item Successfully put item.")
+        print("execute_put_item Successfully put item.")
     except Exception as error:
-        log("ERROR execute_put_item {}".format(error))
+        print("execute_put_item {}".format(error))
 
-def execute_ddb_get_item(dynamodb_client, input):
+def execute_get_item(dynamodb_client, input):
     try:
-        log("INFO execute_get_item {}".format(input))
+        print("execute_get_item {}".format(input))
         response = dynamodb_client.execute_statement(**input)
-        log("INFO execute_get_item Successfully get item. response=".format(response))
-        return response
+        print("execute_get_item Successfully get item. response=".format(response))
     except Exception as error:
-        log("ERROR execute_get_item {}".format(error))
-
+        print("execute_get_item {}".format(error))
 
 DEFAULT_HOST = '0.0.0.0'
 DEFAULT_PORT = 4080
@@ -95,7 +58,7 @@ CHUNK_SIZE = 32
 BUFFER_SIZE = 4096
 COMMIT_INTERVAL = 5
 
-AUTH_REQUIRED = False
+AUTH_REQUIRED = True
 AUTH_URL = 'https://craft.michaelfogleman.com/api/1/access'
 
 DAY_LENGTH = 600
@@ -132,7 +95,7 @@ except ImportError:
 def log(*args):
     now = datetime.datetime.utcnow()
     line = ' '.join(map(str, (now,) + args))
-    print line
+    print(line)
     with open(LOG_PATH, 'a') as fp:
         fp.write('%s\n' % line)
 
@@ -163,11 +126,11 @@ class RateLimiter(object):
             self.allowance -= 1
             return False # okay
 
-class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class Server(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-class Handler(SocketServer.BaseRequestHandler):
+class Handler(socketserver.BaseRequestHandler):
     def setup(self):
         self.position_limiter = RateLimiter(100, 5)
         self.limiter = RateLimiter(1000, 10)
@@ -175,7 +138,7 @@ class Handler(SocketServer.BaseRequestHandler):
         self.client_id = None
         self.user_id = None
         self.nick = None
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.running = True
         self.start()
     def handle(self):
@@ -210,6 +173,7 @@ class Handler(SocketServer.BaseRequestHandler):
     def finish(self):
         self.running = False
     def stop(self):
+        log('in Handler self.run - about to stop',self) 
         self.request.close()
     def start(self):
         thread = threading.Thread(target=self.run)
@@ -224,13 +188,17 @@ class Handler(SocketServer.BaseRequestHandler):
                     try:
                         while True:
                             buf.append(self.queue.get(False))
-                    except Queue.Empty:
+                    except queue.Empty:
                         pass
-                except Queue.Empty:
+                except queue.Empty:
                     continue
                 data = ''.join(buf)
-                self.request.sendall(data)
-            except Exception:
+                log('in Handler self.run - about to sendall:',data) 
+                if(data):
+                  self.request.sendall(data.encode('utf-8'))
+            except Exception as e:
+                #log('in Handler self.run exception - about to sendall:data-',data) 
+                #log('in Handler self.run exception- about to sendall:e-',e) 
                 self.request.close()
                 #raise
     def send_raw(self, data):
@@ -243,7 +211,7 @@ class Model(object):
     def __init__(self, seed):
         self.world = World(seed)
         self.clients = []
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.commands = {
             AUTHENTICATE: self.on_authenticate,
             CHUNK: self.on_chunk,
@@ -283,7 +251,7 @@ class Model(object):
         try:
             func, args, kwargs = self.queue.get(timeout=5)
             func(*args, **kwargs)
-        except Queue.Empty:
+        except queue.Empty:
             pass
     def execute(self, *args, **kwargs):
         return self.connection.execute(*args, **kwargs)
@@ -346,8 +314,9 @@ class Model(object):
         )
         p, q = chunked(x), chunked(z)
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(p,q,x,y,z))
+        ddb_query = ('\"Statement\": "select block_type from GameState \
+                      where PK=p+q+x+y+z and SK=\"Block\"')
+        execute_get_item(dynamodb_client, ddb_query)
         if rows:
             return rows[0][0]
         return self.get_default_block(x, y, z)
@@ -358,6 +327,8 @@ class Model(object):
             result += 1
         return result
     def on_connect(self, client):
+        log('on_connect=',client)
+        log('on_connect.AUTH_REQUIRED=',AUTH_REQUIRED)
         client.client_id = self.next_client_id()
         client.nick = 'guest%d' % client.client_id
         log('CONN', client.client_id, *client.client_address)
@@ -372,7 +343,7 @@ class Model(object):
         self.send_nick(client)
         self.send_nicks(client)
     def on_data(self, client, data):
-        #log('RECV', client.client_id, data)
+        log('RECV', client.client_id, data)
         args = data.split(',')
         command, args = args[0], args[1:]
         if command in self.commands:
@@ -393,21 +364,25 @@ class Model(object):
         client.version = version
         # TODO: client.start() here
     def on_authenticate(self, client, username, access_token):
-        user_id = None
+        log('on_authenticate.access_token=',access_token)
+        log('on_authenticate.client=',client)
+        log('on_authenticate.username=',username)
+        user_id = 'player%d' % client.client_id
         if username and access_token:
             payload = {
                 'username': username,
                 'access_token': access_token,
             }
-            response = requests.post(AUTH_URL, data=payload)
-            if response.status_code == 200 and response.text.isdigit():
-                user_id = int(response.text)
+            #response = requests.post(AUTH_URL, data=payload)
+            #if response.status_code == 200 and response.text.isdigit():
+            #    user_id = int(response.text)
         client.user_id = user_id
-        if user_id is None:
-            client.nick = 'guest%d' % client.client_id
-            client.send(TALK, 'Visit craft.michaelfogleman.com to register!')
-        else:
-            client.nick = username
+        #if user_id is None:
+        #    client.nick = 'guest%d' % client.client_id
+        #    client.send(TALK, 'Visit craft.michaelfogleman.com to register!')
+        #else:
+        #    client.nick = username
+        client.nick='player%d' % client.client_id
         self.send_nick(client)
         # TODO: has left message if was already authenticated
         self.send_talk('%s has joined the game.' % client.nick)
@@ -419,8 +394,6 @@ class Model(object):
             'p = :p and q = :q and rowid > :key;'
         )
         rows = self.execute(query, dict(p=p, q=q, key=key))
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(p,q,key))
         max_rowid = 0
         blocks = 0
         for rowid, x, y, z, w in rows:
@@ -432,8 +405,6 @@ class Model(object):
             'p = :p and q = :q;'
         )
         rows = self.execute(query, dict(p=p, q=q))
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(p,q))
         lights = 0
         for x, y, z, w in rows:
             lights += 1
@@ -443,8 +414,6 @@ class Model(object):
             'p = :p and q = :q;'
         )
         rows = self.execute(query, dict(p=p, q=q))
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(p,q))
         signs = 0
         for x, y, z, face, text in rows:
             signs += 1
@@ -490,8 +459,7 @@ class Model(object):
         )
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_block(client, p, q, x, y, z, w)
-        #ddb
-        execute_put_item(dynamodb_client, create_ddb_put_item('Block',str(p), str(q), str(x), str(y), str(z), str(w)))
+        execute_put_item(dynamodb_client, create_put_item_input(str(p), str(q), str(x), str(y), str(z), str(w)))
         for dx in range(-1, 2):
             for dz in range(-1, 2):
                 if dx == 0 and dz == 0:
@@ -512,7 +480,7 @@ class Model(object):
             query = (
                 'update light set w = 0 where '
                 'x = :x and y = :y and z = :z;'
-           )
+            )
             self.execute(query, dict(x=x, y=y, z=z))
     def on_light(self, client, x, y, z, w):
         x, y, z, w = map(int, (x, y, z, w))
@@ -719,8 +687,8 @@ def cleanup():
     count = 0
     total = 0
     delete_query = 'delete from block where x = %d and y = %d and z = %d;'
-    print 'begin;'
-    for p, q in chunks:
+    print('begin;')
+    for p, q in (chunks):
         chunk = world.create_chunk(p, q)
         query = 'select x, y, z, w from block where p = :p and q = :q;'
         rows = conn.execute(query, {'p': p, 'q': q})
@@ -733,10 +701,10 @@ def cleanup():
             original = chunk.get((x, y, z), 0)
             if w == original or original in INDESTRUCTIBLE_ITEMS:
                 count += 1
-                print delete_query % (x, y, z)
+                print(delete_query % (x, y, z))
     conn.close()
-    print 'commit;'
-    print >> sys.stderr, '%d of %d blocks will be cleaned up' % (count, total)
+    print('commit;')
+    print('%d of %d blocks will be cleaned up' % (count, total))
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'cleanup':
