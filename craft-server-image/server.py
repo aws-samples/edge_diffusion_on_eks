@@ -20,7 +20,11 @@ dynamodb_client = boto3.client("dynamodb", region_name="us-west-2")
 def create_ddb_get_block_type(p,q,x,y,z):
 #select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
     return {
-       "Statement": "select type from GameState where PK=Block' and SK like ="p+q+x+y+z
+        "TableName": "GameState",
+        "KeyConditionExpression": "#11b31 = :11b31 And begins_with(#11b32, :11b32)",
+        "ProjectionExpression": "#11b30",
+        "ExpressionAttributeNames": {"#11b30":"type","#11b31":"PK","#11b32":"SK"},
+        "ExpressionAttributeValues": {":11b31": {"S":"block"},":11b32": {"S":p+q+x+y+z}}
     }
 
 def create_ddb_get_block_rowid(p,q,key):
@@ -32,13 +36,21 @@ def create_ddb_get_block_rowid(p,q,key):
 def create_ddb_get_light(p,q):
 #select x, y, z, w from light where p = :p and q = :q;
     return {
-       "Statement": "select x, y, z, w from GameState where PK='Light' and SK="p+q
+        "TableName": "GameState",
+        "KeyConditionExpression": "#4f421 = :4f421 And begins_with(#4f422, :4f422)",
+        "ProjectionExpression": "#4f420",
+        "ExpressionAttributeNames": {"#4f420":"light","#4f421":"PK","#4f422":"SK"},
+        "ExpressionAttributeValues": {":4f421": {"S":"light"},":4f422": {"S":p+q}}
     }
 
 def create_ddb_get_sign(p,q):
 #select x, y, z, face, text from sign where p = :p and q = :q;
     return {
-        "Statement": "select x,y,z,face,text from GameState where PK='Sign' and SK="p+q
+        "TableName": "GameState",
+        "KeyConditionExpression": "#1ec11 = :1ec11 And begins_with(#1ec12, :1ec12)",
+        "ProjectionExpression": "#1ec10",
+        "ExpressionAttributeNames": {"#1ec10":"sign","#1ec11":"PK","#1ec12":"SK"},
+        "ExpressionAttributeValues": {":1ec11": {"S":"sign"},":1ec12": {"S":p+q}}
     }
 
 def create_ddb_put_item(_type,p,q,w,x,y,z):
