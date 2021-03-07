@@ -20,25 +20,25 @@ dynamodb_client = boto3.client("dynamodb", region_name="us-west-2")
 def create_ddb_get_block_type(p,q,x,y,z):
 #select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
     return {
-       "Statement": "select type from GameState where PK=Block' and SK like ="p+q+x+y+z
+       "Statement": "select type from GameState where PK=Block' and SK like ="+p+q+x+y+z
     }
 
 def create_ddb_get_block_rowid(p,q,key):
 #select rowid, x, y, z, w from block where  p = :p and q = :q and rowid > :key;
     return {
-       "Statement": "select rowid,x,y,z,w from GameState where PK='Block' and SK="p+q+x+y+z
+       "Statement": "select rowid,x,y,z,w from GameState where PK='Block' and SK="+p+q+key
     }
 
 def create_ddb_get_light(p,q):
 #select x, y, z, w from light where p = :p and q = :q;
     return {
-       "Statement": "select x, y, z, w from GameState where PK='Light' and SK="p+q
+       "Statement": "select x, y, z, w from GameState where PK='Light' and SK="+p+q
     }
 
 def create_ddb_get_sign(p,q):
 #select x, y, z, face, text from sign where p = :p and q = :q;
     return {
-        "Statement": "select x,y,z,face,text from GameState where PK='Sign' and SK="p+q
+        "Statement": "select x,y,z,face,text from GameState where PK='Sign' and SK="+p+q
     }
 
 def create_ddb_put_item(_type,p,q,w,x,y,z):
@@ -69,20 +69,20 @@ def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
 
 def execute_ddb_put_item(dynamodb_client, input):
     try:
-        log("INFO execute_put_item {}".format(input))
+        log("INFO execute_ddb_put_item {}".format(input))
         response = dynamodb_client.put_item(**input)
-        log("INFO execute_put_item Successfully put item.")
+        log("INFO execute_ddb_put_item Successfully put item.")
     except Exception as error:
-        log("ERROR execute_put_item {}".format(error))
+        log("ERROR execute_ddb_put_item {}".format(error))
 
 def execute_ddb_get_item(dynamodb_client, input):
     try:
-        log("INFO execute_get_item {}".format(input))
+        log("INFO execute_ddb_get_item {}".format(input))
         response = dynamodb_client.execute_statement(**input)
-        log("INFO execute_get_item Successfully get item. response=".format(response))
+        log("INFO execute_ddb_get_item Successfully get item. response=".format(response))
         return response
     except Exception as error:
-        log("ERROR execute_get_item {}".format(error))
+        log("ERROR execute_ddb_get_item {}".format(error))
 
 
 DEFAULT_HOST = '0.0.0.0'
@@ -347,7 +347,7 @@ class Model(object):
         p, q = chunked(x), chunked(z)
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(p,q,x,y,z))
+        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
         if rows:
             return rows[0][0]
         return self.get_default_block(x, y, z)
@@ -360,7 +360,7 @@ class Model(object):
     def on_connect(self, client):
         client.client_id = self.next_client_id()
         client.nick = 'guest%d' % client.client_id
-        log('CONN', client.client_id, *client.client_address)
+        #log('CONN', client.client_id, *client.client_address)
         client.position = SPAWN_POINT
         self.clients.append(client)
         client.send(YOU, client.client_id, *client.position)
@@ -379,10 +379,10 @@ class Model(object):
             func = self.commands[command]
             func(client, *args)
     def on_disconnect(self, client):
-        log('DISC', client.client_id, *client.client_address)
+        #log('DISC', client.client_id, *client.client_address)
         self.clients.remove(client)
         self.send_disconnect(client)
-        self.send_talk('%s has disconnected from the server.' % client.nick)
+        #self.send_talk('%s has disconnected from the server.' % client.nick)
     def on_version(self, client, version):
         if client.version is not None:
             return
@@ -418,9 +418,9 @@ class Model(object):
             'select rowid, x, y, z, w from block where '
             'p = :p and q = :q and rowid > :key;'
         )
-        rows = self.execute(query, dict(p=p, q=q, key=key))
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(p,q,key))
+        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
+        rows = self.execute(query, dict(p=p, q=q, key=key))
         max_rowid = 0
         blocks = 0
         for rowid, x, y, z, w in rows:
@@ -431,9 +431,9 @@ class Model(object):
             'select x, y, z, w from light where '
             'p = :p and q = :q;'
         )
-        rows = self.execute(query, dict(p=p, q=q))
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(p,q))
+        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
+        rows = self.execute(query, dict(p=p, q=q))
         lights = 0
         for x, y, z, w in rows:
             lights += 1
@@ -442,9 +442,9 @@ class Model(object):
             'select x, y, z, face, text from sign where '
             'p = :p and q = :q;'
         )
-        rows = self.execute(query, dict(p=p, q=q))
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(p,q))
+        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
+        rows = self.execute(query, dict(p=p, q=q))
         signs = 0
         for x, y, z, face, text in rows:
             signs += 1
@@ -491,7 +491,7 @@ class Model(object):
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_block(client, p, q, x, y, z, w)
         #ddb
-        execute_put_item(dynamodb_client, create_ddb_put_item('Block',str(p), str(q), str(x), str(y), str(z), str(w)))
+        execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Block',str(p), str(q), str(x), str(y), str(z), str(w)))
         for dx in range(-1, 2):
             for dz in range(-1, 2):
                 if dx == 0 and dz == 0:
@@ -536,6 +536,8 @@ class Model(object):
         )
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_light(client, p, q, x, y, z, w)
+        #ddb
+        execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Light',str(p), str(q), str(x), str(y), str(z), str(w)))
     def on_sign(self, client, x, y, z, face, *args):
         if AUTH_REQUIRED and client.user_id is None:
             client.send(TALK, 'Only logged in users are allowed to build.')
