@@ -1,7 +1,7 @@
 from math import floor
 from world import World
-import Queue
-import SocketServer
+import queue
+import socketserver
 import datetime
 import random
 import re
@@ -12,96 +12,79 @@ import threading
 import time
 import traceback
 
+# Load the AWS SDK for Python
 import boto3
 from botocore.exceptions import ClientError
 
 dynamodb_client = boto3.client("dynamodb", region_name="us-west-2")
 
-def create_ddb_get_block_type(p,q,x,y,z):
-#select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
-    return {
-        "TableName": "GameState",
-        "KeyConditionExpression": "#11b31 = :11b31 And begins_with(#11b32, :11b32)",
-        "ProjectionExpression": "#11b30",
-        "ExpressionAttributeNames": {"#11b30":"type","#11b31":"PK","#11b32":"SK"},
-        "ExpressionAttributeValues": {":11b31": {"S":"block"},":11b32": {"S":p+q+x+y+z}}
-    }
+ERROR_HELP_STRINGS = {
+    # Operation specific errors
+    'ConditionalCheckFailedException': 'Condition check specified in the operation failed, review and update the condition check before retrying',
+    'TransactionConflictException': 'Operation was rejected because there is an ongoing transaction for the item, generally safe to retry with exponential back-off',
+    'ItemCollectionSizeLimitExceededException': 'An item collection is too large, you\'re using Local Secondary Index and exceeded size limit of items per partition key.' +
+                                                ' Consider using Global Secondary Index instead',
+    # Common Errors
+    'InternalServerError': 'Internal Server Error, generally safe to retry with exponential back-off',
+    'ProvisionedThroughputExceededException': 'Request rate is too high. If you\'re using a custom retry strategy make sure to retry with exponential back-off.' +
+                                              'Otherwise consider reducing frequency of requests or increasing provisioned capacity for your table or secondary index',
+    'ResourceNotFoundException': 'One of the tables was not found, verify table exists before retrying',
+    'ServiceUnavailable': 'Had trouble reaching DynamoDB. generally safe to retry with exponential back-off',
+    'ThrottlingException': 'Request denied due to throttling, generally safe to retry with exponential back-off',
+    'UnrecognizedClientException': 'The request signature is incorrect most likely due to an invalid AWS access key ID or secret key, fix before retrying',
+    'ValidationException': 'The input fails to satisfy the constraints specified by DynamoDB, fix input before retrying',
+    'RequestLimitExceeded': 'Throughput exceeds the current throughput limit for your account, increase account level throughput before retrying',
+}
 
-def create_ddb_get_block_rowid(p,q,key):
-#select rowid, x, y, z, w from block where  p = :p and q = :q and rowid > :key;
-    return {
-       "Statement": "select rowid,x,y,z,w from GameState where PK='Block' and SK="+p+q+key
-    }
-
-def create_ddb_get_light(p,q):
-#select x, y, z, w from light where p = :p and q = :q;
-    return {
-        "TableName": "GameState",
-        "KeyConditionExpression": "#4f421 = :4f421 And begins_with(#4f422, :4f422)",
-        "ProjectionExpression": "#4f420",
-        "ExpressionAttributeNames": {"#4f420":"light","#4f421":"PK","#4f422":"SK"},
-        "ExpressionAttributeValues": {":4f421": {"S":"light"},":4f422": {"S":p+q}}
-    }
-
-def create_ddb_get_sign(p,q):
-#select x, y, z, face, text from sign where p = :p and q = :q;
-    return {
-        "TableName": "GameState",
-        "KeyConditionExpression": "#1ec11 = :1ec11 And begins_with(#1ec12, :1ec12)",
-        "ProjectionExpression": "#1ec10",
-        "ExpressionAttributeNames": {"#1ec10":"sign","#1ec11":"PK","#1ec12":"SK"},
-        "ExpressionAttributeValues": {":1ec11": {"S":"sign"},":1ec12": {"S":p+q}}
-    }
-
-def create_ddb_put_item(_type,p,q,w,x,y,z):
+def create_dynamodb_client(region="us-west-2"):
+    return boto3.client("dynamodb", region_name=region)
+def create_put_item_input(pp, qq, xx, yy, zz, ww):
+    print("create_put_item_input start")
     return {
         "TableName": "GameState",
         "Item": {
-            "PK": {"S":_type}, 
-            "SK": {"S":p+q+x+y+z+w}, 
-            "position": {"S":x+y+z}, 
-            "type": {"S":w}, 
-            "chunk": {"S":p+q}, 
-            "block": {"M": {"p": {"N":p},"q": {"N":q},"w": {"N":w},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
+            "PK": {"S":str(pp+qq+xx+yy+zz)}, 
+            "SK": {"S":"Block"}, 
+            "Block_Postion": {"L": [{"N":xx}, {"N":yy}, {"N":zz}]}, 
+            "Block_Type": {"N":ww}, 
+            "Chunk": {"L": [{"N":pp}, {"N":qq}]}, 
+            "Block": {"L": [{"N":pp}, {"N":qq}, {"N":xx}, {"N":yy}, {"N":zz}, {"N":ww}]}
         }
     }
 
-def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
-    return {
-        "TableName": "GameState",
-        "Item": {
-            "PK": {"S":_type}, 
-            "SK": {"S":p+q+x+y+z+face+text}, 
-            "chunk": {"S":p+q}, 
-            "sign_position": {"S":x+y+z}, 
-            "sign_face": {"S":x+y+z+face}, 
-            "sign": {"M": {"face": {"N":face},"p": {"N":p},"q": {"N":q},"text": {"N":text},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
-        }
-    }
 
-def execute_ddb_put_item(dynamodb_client, input):
+def execute_put_item(dynamodb_client, input):
     try:
-        log("INFO execute_ddb_put_item {}".format(input))
+        print("execute_put_item {}".format(input))
         response = dynamodb_client.put_item(**input)
-        log("INFO execute_ddb_put_item Successfully put item.")
+        print("execute_put_item Successfully put item.")
     except Exception as error:
-        log("ERROR execute_ddb_put_item {}".format(error))
+        print("execute_put_item {}".format(error))
 
-def execute_ddb_get_item(dynamodb_client, input):
+def execute_get_item(dynamodb_client, input):
     try:
-        log("INFO execute_ddb_get_item {}".format(input))
+        print("execute_get_item {}".format(input))
         response = dynamodb_client.execute_statement(**input)
-        log("INFO execute_ddb_get_item Successfully get item. response=".format(response))
-        return response
+        print("execute_get_item Successfully get item. response=".format(response))
     except Exception as error:
-        log("ERROR execute_ddb_get_item {}".format(error))
+        print("execute_get_item {}".format(error))
 
+def handle_error(error):
+    error_code = error.response['Error']['Code']
+    error_message = error.response['Error']['Message']
+
+    error_help_string = ERROR_HELP_STRINGS[error_code]
+
+    print('[{error_code}] {help_string}. Error message: {error_message}'
+          .format(error_code=error_code,
+                  help_string=error_help_string,
+                  error_message=error_message))
 
 DEFAULT_HOST = '0.0.0.0'
 DEFAULT_PORT = 4080
 
 DB_PATH = 'craft.db'
-LOG_PATH = 'log.txt'
+LOG_PATH = '/var/log/craft.log'
 
 CHUNK_SIZE = 32
 BUFFER_SIZE = 4096
@@ -144,7 +127,7 @@ except ImportError:
 def log(*args):
     now = datetime.datetime.utcnow()
     line = ' '.join(map(str, (now,) + args))
-    print line
+    print(line)
     with open(LOG_PATH, 'a') as fp:
         fp.write('%s\n' % line)
 
@@ -175,11 +158,11 @@ class RateLimiter(object):
             self.allowance -= 1
             return False # okay
 
-class Server(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class Server(socketserver.ThreadingMixIn, socketserver.TCPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-class Handler(SocketServer.BaseRequestHandler):
+class Handler(socketserver.BaseRequestHandler):
     def setup(self):
         self.position_limiter = RateLimiter(100, 5)
         self.limiter = RateLimiter(1000, 10)
@@ -187,7 +170,7 @@ class Handler(SocketServer.BaseRequestHandler):
         self.client_id = None
         self.user_id = None
         self.nick = None
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.running = True
         self.start()
     def handle(self):
@@ -236,15 +219,16 @@ class Handler(SocketServer.BaseRequestHandler):
                     try:
                         while True:
                             buf.append(self.queue.get(False))
-                    except Queue.Empty:
+                    except queue.Empty:
                         pass
-                except Queue.Empty:
+                except queue.Empty:
                     continue
                 data = ''.join(buf)
+                log('in run:',data)
                 self.request.sendall(data)
-            except Exception:
+            except Exception as e:
                 self.request.close()
-                #raise
+                raise
     def send_raw(self, data):
         if data:
             self.queue.put(data)
@@ -255,7 +239,7 @@ class Model(object):
     def __init__(self, seed):
         self.world = World(seed)
         self.clients = []
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.commands = {
             AUTHENTICATE: self.on_authenticate,
             CHUNK: self.on_chunk,
@@ -279,6 +263,98 @@ class Model(object):
         thread.setDaemon(True)
         thread.start()
     def run(self):
+        while self.running:
+            try:
+                buf = []
+                try:
+                    buf.append(self.queue.get(timeout=5))
+                    try:
+                        while True:
+                            buf.append(self.queue.get(False))
+                    except queue.Empty:
+                        pass
+                except queue.Empty:
+                    continue
+                data = ''.join(buf)
+                log('self.run()-',data)
+                self.request.sendall(data)
+            except Exception:
+                self.request.close()
+                raise
+
+    def send_raw(self, data):
+        if data:
+            self.queue.put(data)
+    def send(self, *args):
+        self.send_raw(packet(*args))
+
+class Model(object):
+    def __init__(self, seed):
+        self.world = World(seed)
+        self.clients = []
+        self.queue = queue.Queue()
+        self.commands = {
+            AUTHENTICATE: self.on_authenticate,
+            CHUNK: self.on_chunk,
+            BLOCK: self.on_block,
+            LIGHT: self.on_light,
+            POSITION: self.on_position,
+            TALK: self.on_talk,
+            SIGN: self.on_sign,
+            VERSION: self.on_version,
+        }
+        self.patterns = [
+            (re.compile(r'^/nick(?:\s+([^,\s]+))?$'), self.on_nick),
+            (re.compile(r'^/spawn$'), self.on_spawn),
+            (re.compile(r'^/goto(?:\s+(\S+))?$'), self.on_goto),
+            (re.compile(r'^/pq\s+(-?[0-9]+)\s*,?\s*(-?[0-9]+)$'), self.on_pq),
+            (re.compile(r'^/help(?:\s+(\S+))?$'), self.on_help),
+            (re.compile(r'^/list$'), self.on_list),
+        ]
+    def start(self):
+        thread = threading.Thread(target=self.run)
+        thread.setDaemon(True)
+        thread.start()
+    def run(self):
+        elf.request.sendall(data)
+            except Exception as e:
+                self.request.close()
+                raise
+    def send_raw(self, data):
+        if data:
+            self.queue.put(data)
+    def send(self, *args):
+        self.send_raw(packet(*args))
+
+class Model(object):
+    def __init__(self, seed):
+        self.world = World(seed)
+        self.clients = []
+        self.queue = queue.Queue()
+        self.commands = {
+            AUTHENTICATE: self.on_authenticate,
+            CHUNK: self.on_chunk,
+            BLOCK: self.on_block,
+            LIGHT: self.on_light,
+            POSITION: self.on_position,
+            TALK: self.on_talk,
+            SIGN: self.on_sign,
+            VERSION: self.on_version,
+        }
+        self.patterns = [
+            (re.compile(r'^/nick(?:\s+([^,\s]+))?$'), self.on_nick),
+            (re.compile(r'^/spawn$'), self.on_spawn),
+            (re.compile(r'^/goto(?:\s+(\S+))?$'), self.on_goto),
+            (re.compile(r'^/pq\s+(-?[0-9]+)\s*,?\s*(-?[0-9]+)$'), self.on_pq),
+            (re.compile(r'^/help(?:\s+(\S+))?$'), self.on_help),
+            (re.compile(r'^/list$'), self.on_list),
+        ]
+    def start(self):
+        thread = threading.Thread(target=self.run)
+        thread.setDaemon(True)
+        thread.start()
+    def run(self):
+        log('self.run()-start run')
         self.connection = sqlite3.connect(DB_PATH)
         self.create_tables()
         self.commit()
@@ -287,17 +363,20 @@ class Model(object):
                 if time.time() - self.last_commit > COMMIT_INTERVAL:
                     self.commit()
                 self.dequeue()
-            except Exception:
+            except Exception as e:
+                log('Exception-self.run ',e)
                 traceback.print_exc()
+        log('self.run()-stop run')
     def enqueue(self, func, *args, **kwargs):
         self.queue.put((func, args, kwargs))
     def dequeue(self):
         try:
             func, args, kwargs = self.queue.get(timeout=5)
             func(*args, **kwargs)
-        except Queue.Empty:
+        except queue.Empty:
             pass
     def execute(self, *args, **kwargs):
+        log('EXECUTE',*args,**kwargs)
         return self.connection.execute(*args, **kwargs)
     def commit(self):
         self.last_commit = time.time()
@@ -358,8 +437,10 @@ class Model(object):
         )
         p, q = chunked(x), chunked(z)
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
+        print("get_block rows from sqlite={}".format(rows))
+        ddb_query = ('\"Statement\": "select block_type from GameState \
+                      where PK=p+q+x+y+z and SK=\"Block\"')
+        execute_get_item(dynamodb_client, ddb_query) 
         if rows:
             return rows[0][0]
         return self.get_default_block(x, y, z)
@@ -372,7 +453,7 @@ class Model(object):
     def on_connect(self, client):
         client.client_id = self.next_client_id()
         client.nick = 'guest%d' % client.client_id
-        #log('CONN', client.client_id, *client.client_address)
+        log('CONN', client.client_id, *client.client_address)
         client.position = SPAWN_POINT
         self.clients.append(client)
         client.send(YOU, client.client_id, *client.position)
@@ -384,17 +465,17 @@ class Model(object):
         self.send_nick(client)
         self.send_nicks(client)
     def on_data(self, client, data):
-        #log('RECV', client.client_id, data)
+        log('RECV', client.client_id, data)
         args = data.split(',')
         command, args = args[0], args[1:]
         if command in self.commands:
             func = self.commands[command]
             func(client, *args)
     def on_disconnect(self, client):
-        #log('DISC', client.client_id, *client.client_address)
+        log('DISC', client.client_id, *client.client_address)
         self.clients.remove(client)
         self.send_disconnect(client)
-        #self.send_talk('%s has disconnected from the server.' % client.nick)
+        self.send_talk('%s has disconnected from the server.' % client.nick)
     def on_version(self, client, version):
         if client.version is not None:
             return
@@ -420,6 +501,7 @@ class Model(object):
             client.send(TALK, 'Visit craft.michaelfogleman.com to register!')
         else:
             client.nick = username
+        client.nick='player%d' % client.client_id
         self.send_nick(client)
         # TODO: has left message if was already authenticated
         self.send_talk('%s has joined the game.' % client.nick)
@@ -430,8 +512,6 @@ class Model(object):
             'select rowid, x, y, z, w from block where '
             'p = :p and q = :q and rowid > :key;'
         )
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
         rows = self.execute(query, dict(p=p, q=q, key=key))
         max_rowid = 0
         blocks = 0
@@ -443,8 +523,6 @@ class Model(object):
             'select x, y, z, w from light where '
             'p = :p and q = :q;'
         )
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         lights = 0
         for x, y, z, w in rows:
@@ -454,8 +532,6 @@ class Model(object):
             'select x, y, z, face, text from sign where '
             'p = :p and q = :q;'
         )
-        #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         signs = 0
         for x, y, z, face, text in rows:
@@ -502,8 +578,14 @@ class Model(object):
         )
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_block(client, p, q, x, y, z, w)
-        #ddb
-        execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Block',str(p), str(q), str(x), str(y), str(z), str(w)))
+        print("in_on_block     p={},q={},x={},y={},z={},w={}".format(p, q, x, y, z, w))
+        pp=str(p)
+        qq=str(q)
+        xx=str(x)
+        yy=str(y)
+        zz=str(z)
+        ww=str(w)
+        execute_put_item(dynamodb_client, create_put_item_input(pp, qq, xx, yy, zz, ww))
         for dx in range(-1, 2):
             for dz in range(-1, 2):
                 if dx == 0 and dz == 0:
@@ -524,7 +606,7 @@ class Model(object):
             query = (
                 'update light set w = 0 where '
                 'x = :x and y = :y and z = :z;'
-           )
+            )
             self.execute(query, dict(x=x, y=y, z=z))
     def on_light(self, client, x, y, z, w):
         x, y, z, w = map(int, (x, y, z, w))
@@ -548,8 +630,6 @@ class Model(object):
         )
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_light(client, p, q, x, y, z, w)
-        #ddb
-        execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Light',str(p), str(q), str(x), str(y), str(z), str(w)))
     def on_sign(self, client, x, y, z, face, *args):
         if AUTH_REQUIRED and client.user_id is None:
             client.send(TALK, 'Only logged in users are allowed to build.')
@@ -733,8 +813,8 @@ def cleanup():
     count = 0
     total = 0
     delete_query = 'delete from block where x = %d and y = %d and z = %d;'
-    print 'begin;'
-    for p, q in chunks:
+    print('begin;')
+    for p, q in (chunks):
         chunk = world.create_chunk(p, q)
         query = 'select x, y, z, w from block where p = :p and q = :q;'
         rows = conn.execute(query, {'p': p, 'q': q})
@@ -747,10 +827,10 @@ def cleanup():
             original = chunk.get((x, y, z), 0)
             if w == original or original in INDESTRUCTIBLE_ITEMS:
                 count += 1
-                print delete_query % (x, y, z)
+                print(delete_query % (x, y, z))
     conn.close()
-    print 'commit;'
-    print >> sys.stderr, '%d of %d blocks will be cleaned up' % (count, total)
+    print('commit;')
+    print('%d of %d blocks will be cleaned up' % (count, total))
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'cleanup':
