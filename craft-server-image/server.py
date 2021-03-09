@@ -65,16 +65,6 @@ def create_ddb_put_item(_type,p,q,w,x,y,z):
             "block": {"M": {"p": {"N":p},"q": {"N":q},"w": {"N":w},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
         }
     }
-
-def execute_query(dynamodb_client, input):
-    try:
-        response = dynamodb_client.query(**input)
-        print("Query successful.")
-        # Handle response
-    except ClientError as error:
-        handle_error(error)
-    except BaseException as error:
-        print("Unknown error while querying: " + error.response['Error']['Message'])
         
 def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
     return {
@@ -106,7 +96,15 @@ def execute_ddb_get_item(dynamodb_client, input):
     except Exception as error:
         log("ERROR execute_ddb_get_item {}".format(error))
 
-
+def execute_ddb_query(dynamodb_client, input):
+    try:
+        log("INFO execute_ddb_query {}".format(input))
+        response = dynamodb_client.query(**input)
+        log("INFO execute_ddb_query Query Successful. response=".format(response))
+        return response
+    except Exception as error:
+        log("ERROR execute_ddb_query {}".format(error))
+        
 DEFAULT_HOST = '0.0.0.0'
 DEFAULT_PORT = 4080
 
@@ -370,7 +368,7 @@ class Model(object):
         #ddb
 
         #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
-        rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
+        rows = execute_ddb_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         if rows:
             return rows[0][0]
@@ -456,7 +454,7 @@ class Model(object):
             'p = :p and q = :q;'
         )
         #ddb
-        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
+        rows = execute_ddb_query(dynamodb_client,create_ddb_get_light(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         lights = 0
         for x, y, z, w in rows:
@@ -467,7 +465,7 @@ class Model(object):
             'p = :p and q = :q;'
         )
         #ddb
-        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
+        rows = execute_ddb_query(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         signs = 0
         for x, y, z, face, text in rows:
