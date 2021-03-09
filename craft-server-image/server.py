@@ -367,9 +367,11 @@ class Model(object):
             'p = :p and q = :q and x = :x and y = :y and z = :z;'
         )
         p, q = chunked(x), chunked(z)
-        rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         #ddb
-        rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
+
+        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
+        rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
+        rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         if rows:
             return rows[0][0]
         return self.get_default_block(x, y, z)
@@ -441,7 +443,7 @@ class Model(object):
             'p = :p and q = :q and rowid > :key;'
         )
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
+        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
         rows = self.execute(query, dict(p=p, q=q, key=key))
         max_rowid = 0
         blocks = 0
@@ -454,7 +456,7 @@ class Model(object):
             'p = :p and q = :q;'
         )
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
+        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         lights = 0
         for x, y, z, w in rows:
@@ -465,7 +467,7 @@ class Model(object):
             'p = :p and q = :q;'
         )
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
+        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         signs = 0
         for x, y, z, face, text in rows:
