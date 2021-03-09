@@ -66,6 +66,16 @@ def create_ddb_put_item(_type,p,q,w,x,y,z):
         }
     }
 
+def execute_query(dynamodb_client, input):
+    try:
+        response = dynamodb_client.query(**input)
+        print("Query successful.")
+        # Handle response
+    except ClientError as error:
+        handle_error(error)
+    except BaseException as error:
+        print("Unknown error while querying: " + error.response['Error']['Message'])
+        
 def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
     return {
         "TableName": "GameState",
@@ -358,8 +368,9 @@ class Model(object):
         )
         p, q = chunked(x), chunked(z)
         #ddb
-        rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
-        log('ggget_block',str(p))
+
+        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
+        rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         if rows:
             return rows[0][0]
