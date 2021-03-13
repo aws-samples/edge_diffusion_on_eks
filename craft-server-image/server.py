@@ -69,12 +69,13 @@ def create_ddb_put_item(_type,p,q,w,x,y,z):
 def execute_query(dynamodb_client, input):
     try:
         response = dynamodb_client.query(**input)
-        print("Query successful.")
+        log("Query successful.",response)
         # Handle response
+        return response
     except ClientError as error:
         handle_error(error)
     except BaseException as error:
-        print("Unknown error while querying: " + error.response['Error']['Message'])
+        log("Unknown error while querying: " + error.response['Error']['Message'])
         
 def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
     return {
@@ -362,6 +363,7 @@ class Model(object):
         chunk = self.world.get_chunk(p, q)
         return chunk.get((x, y, z), 0)
     def get_block(self, x, y, z):
+        log('get_block')
         query = (
             'select w from block where '
             'p = :p and q = :q and x = :x and y = :y and z = :z;'
@@ -370,9 +372,12 @@ class Model(object):
         #ddb
 
         #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
-        rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
+        rows_ddb = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
+        log('get block type',dict(p=p, q=q, x=x, y=y, z=z))
+        log('rows from ddb',rows_ddb['Items'])
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         if rows:
+            log('rows from sqlite',rows[0][0])
             return rows[0][0]
         return self.get_default_block(x, y, z)
     def next_client_id(self):
@@ -443,7 +448,8 @@ class Model(object):
             'p = :p and q = :q and rowid > :key;'
         )
         #ddb
-        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
+        #rows print= execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
+        #rows = execute_query(dynamodb_client,create_ddb_get_item(str(p),str(q),str(key)))
         rows = self.execute(query, dict(p=p, q=q, key=key))
         max_rowid = 0
         blocks = 0
@@ -457,7 +463,9 @@ class Model(object):
         )
         #ddb
         #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
+        #rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
+
         lights = 0
         for x, y, z, w in rows:
             lights += 1
@@ -468,6 +476,7 @@ class Model(object):
         )
         #ddb
         #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
+        #rows = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         signs = 0
         for x, y, z, face, text in rows:
@@ -480,6 +489,7 @@ class Model(object):
         packets.append(packet(CHUNK, p, q))
         client.send_raw(''.join(packets))
     def on_block(self, client, x, y, z, w):
+        log('on_block','x='+str(x)+'y='+str(y)+'z='+str(z)+'w='+str(w))
         x, y, z, w = map(int, (x, y, z, w))
         p, q = chunked(x), chunked(z)
         previous = self.get_block(x, y, z)
@@ -512,9 +522,11 @@ class Model(object):
             'insert or replace into block (p, q, x, y, z, w) '
             'values (:p, :q, :x, :y, :z, :w);'
         )
+        log('insert into sqlite',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_block(client, p, q, x, y, z, w)
         #ddb
+        log('insert into ddb',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
         execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Block',str(p), str(q), str(x), str(y), str(z), str(w)))
         for dx in range(-1, 2):
             for dz in range(-1, 2):
