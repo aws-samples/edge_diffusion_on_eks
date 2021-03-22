@@ -65,7 +65,7 @@ spec:
       hostNetwork: true
       containers:
       - name: spot-interrupt-handler
-        image: 356566070122.dkr.ecr.us-west-2.amazonaws.com/spot-sig-handler:latest
+        image: 163538056407.dkr.ecr.us-west-2.amazonaws.com/spot-sig-handler:0.1
         imagePullPolicy: Always
         command: ["/start.sh"]
         env:
@@ -82,6 +82,5 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
       nodeSelector:
-        lifecycle: spot
-        title: minecraft
+        lifecycle: Ec2Spot
 

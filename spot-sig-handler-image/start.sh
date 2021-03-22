@@ -37,7 +37,8 @@ echo "\`kubectl drain ${NODE_NAME}\` will be executed once a termination notice 
 
 
 POLL_INTERVAL=${POLL_INTERVAL:-5}
-NOTICE_URL=${NOTICE_URL:-http://169.254.169.254/latest/meta-data/spot/termination-time}
+#NOTICE_URL=${NOTICE_URL:-http://169.254.169.254/latest/meta-data/spot/termination-time}
+NOTICE_URL=${NOTICE_URL:-http://169.254.169.254/latest/meta-data/events/recommendations/rebalance}
 
 echo "Polling ${NOTICE_URL} every ${POLL_INTERVAL} second(s)"
 
@@ -46,15 +47,16 @@ while http_status=$(curl -o /dev/null -w '%{http_code}' -sL ${NOTICE_URL}); [ ${
   sleep ${POLL_INTERVAL}
 done
 
+echo $(date): "events/recommendations/rebalance"
 echo $(date): ${http_status}
 
-MESSAGE="[{'status': 'spot termination', 'public_hostname': ${NODE_NAME}, 'public_port': NA, 'region': 'us-west'}]"
-MESSAGE_GRP_ID="gsGrp_us-west-2"
-aws sqs send-message --queue-url ${QUEUE_URL} --message-body "${MESSAGE}" --message-group-id ${MESSAGE_GRP_ID}
+#MESSAGE="[{'status': 'spot termination', 'public_hostname': ${NODE_NAME}, 'public_port': NA, 'region': 'us-west'}]"
+#MESSAGE_GRP_ID="gsGrp_us-west-2"
+#aws sqs send-message --queue-url ${QUEUE_URL} --message-body "${MESSAGE}" --message-group-id ${MESSAGE_GRP_ID}
 
-echo "Drain the node."
+echo "Draining the nodei due to spot rebalance recommendations."
 kubectl drain ${NODE_NAME} --force --ignore-daemonsets
 
 echo "Sleep for 200 seconds to prevent raise condition"
-# The instance should be terminated by the end of the sleep assumming 120 sec notification time
+# The instance should be terminated by the end of the sleep assumming 120 sec notification time. Rebalance recommendations might take longer
 sleep 200
