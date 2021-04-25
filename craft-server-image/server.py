@@ -6,115 +6,30 @@ import datetime
 import random
 import re
 import requests
+import urllib2
+import json
 import sqlite3
 import sys
 import threading
 import time
 import traceback
-
+import os
 import boto3
+import base64
 from botocore.exceptions import ClientError
 
-dynamodb_client = boto3.client("dynamodb", region_name="us-west-2")
 
-def create_ddb_get_block_type(p,q,x,y,z):
-#select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
-    return {
-        "TableName": "GameState",
-        "KeyConditionExpression": "#11b31 = :11b31 And begins_with(#11b32, :11b32)",
-        "ProjectionExpression": "#11b30",
-        "ExpressionAttributeNames": {"#11b30":"type","#11b31":"PK","#11b32":"SK"},
-        "ExpressionAttributeValues": {":11b31": {"S":"block"},":11b32": {"S":p+q+x+y+z}}
-    }
 
-def create_ddb_get_block_rowid(p,q,key):
-#select rowid, x, y, z, w from block where  p = :p and q = :q and rowid > :key;
-    return {
-       "Statement": "select rowid,x,y,z,w from GameState where PK='Block' and SK="+p+q+key
-    }
-
-def create_ddb_get_light(p,q):
-#select x, y, z, w from light where p = :p and q = :q;
-    return {
-        "TableName": "GameState",
-        "KeyConditionExpression": "#4f421 = :4f421 And begins_with(#4f422, :4f422)",
-        "ProjectionExpression": "#4f420",
-        "ExpressionAttributeNames": {"#4f420":"light","#4f421":"PK","#4f422":"SK"},
-        "ExpressionAttributeValues": {":4f421": {"S":"light"},":4f422": {"S":p+q}}
-    }
-
-def create_ddb_get_sign(p,q):
-#select x, y, z, face, text from sign where p = :p and q = :q;
-    return {
-        "TableName": "GameState",
-        "KeyConditionExpression": "#1ec11 = :1ec11 And begins_with(#1ec12, :1ec12)",
-        "ProjectionExpression": "#1ec10",
-        "ExpressionAttributeNames": {"#1ec10":"sign","#1ec11":"PK","#1ec12":"SK"},
-        "ExpressionAttributeValues": {":1ec11": {"S":"sign"},":1ec12": {"S":p+q}}
-    }
-
-def create_ddb_put_item(_type,p,q,w,x,y,z):
-    return {
-        "TableName": "GameState",
-        "Item": {
-            "PK": {"S":_type}, 
-            "SK": {"S":p+q+x+y+z+w}, 
-            "position": {"S":x+y+z}, 
-            "type": {"S":w}, 
-            "chunk": {"S":p+q}, 
-            "block": {"M": {"p": {"N":p},"q": {"N":q},"w": {"N":w},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
-        }
-    }
-
-def execute_query(dynamodb_client, input):
-    try:
-        response = dynamodb_client.query(**input)
-        log("Query successful.",response)
-        # Handle response
-        return response
-    except ClientError as error:
-        handle_error(error)
-    except BaseException as error:
-        log("Unknown error while querying: " + error.response['Error']['Message'])
-        
-def create_ddb_sign_put_item(_type,p,q,x,y,z,face,text):
-    return {
-        "TableName": "GameState",
-        "Item": {
-            "PK": {"S":_type}, 
-            "SK": {"S":p+q+x+y+z+face+text}, 
-            "chunk": {"S":p+q}, 
-            "sign_position": {"S":x+y+z}, 
-            "sign_face": {"S":x+y+z+face}, 
-            "sign": {"M": {"face": {"N":face},"p": {"N":p},"q": {"N":q},"text": {"N":text},"x": {"N":x},"y": {"N":y},"z": {"N":z}}}
-        }
-    }
-
-def execute_ddb_put_item(dynamodb_client, input):
-    try:
-        log("INFO execute_ddb_put_item {}".format(input))
-        response = dynamodb_client.put_item(**input)
-        log("INFO execute_ddb_put_item Successfully put item.")
-    except Exception as error:
-        log("ERROR execute_ddb_put_item {}".format(error))
-
-def execute_ddb_get_item(dynamodb_client, input):
-    try:
-        log("INFO execute_ddb_get_item {}".format(input))
-        response = dynamodb_client.execute_statement(**input)
-        log("INFO execute_ddb_get_item Successfully get item. response=".format(response))
-        return response
-    except Exception as error:
-        log("ERROR execute_ddb_get_item {}".format(error))
-
-def execute_ddb_query(dynamodb_client, input):
-    try:
-        log("INFO execute_ddb_query {}".format(input))
-        response = dynamodb_client.query(**input)
-        log("INFO execute_ddb_query Query Successful. response=".format(response))
-        return response
-    except Exception as error:
-        log("ERROR execute_ddb_query {}".format(error))
+#rdsData = boto3.client('rds-data',region_name="us-west-2")
+region=os.environ['REGION']
+rds_client = boto3.client('rds-data', region_name=region)
+cluster_arn = os.environ['CLUSTER_ARN']
+#cluster_arn = 'arn:aws:rds:us-west-2:163538056407:cluster:craft' 
+secret_arn = os.environ['SECRET_ARN']
+#secret_arn = 'arn:aws:secretsmanager:us-west-2:163538056407:secret:craft-login-HdmZgN' 
+database_name = os.environ['DB_NAME']
+#database_name = 'craft'
+agones_port = os.environ['AGONES_SDK_HTTP_PORT']
 
 DEFAULT_HOST = '0.0.0.0'
 DEFAULT_PORT = 4080
@@ -159,6 +74,17 @@ try:
     from config import *
 except ImportError:
     pass
+
+
+def execute_rds_statement(sql, sql_parameters=[]):
+    response = rds_client.execute_statement(
+        secretArn=secret_arn,
+        database=database_name,
+        resourceArn=cluster_arn,
+        sql=sql,
+        parameters=sql_parameters
+    )
+    return response
 
 def log(*args):
     now = datetime.datetime.utcnow()
@@ -377,13 +303,18 @@ class Model(object):
             'p = :p and q = :q and x = :x and y = :y and z = :z;'
         )
         p, q = chunked(x), chunked(z)
-        #ddb
 
-        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))
-        rows_ddb = execute_query(dynamodb_client,create_ddb_get_block_type(str(p),str(q),str(x),str(y),str(z)))    
-        log('get block type',dict(p=p, q=q, x=x, y=y, z=z))
-        log('rows from ddb',rows_ddb['Items'])
+        sql_parameters = [
+            {'name':'p', 'value':{'doubleValue': p}},
+            {'name':'q', 'value':{'doubleValue': q}},
+            {'name':'x', 'value':{'doubleValue': x}},
+            {'name':'y', 'value':{'doubleValue': y}},
+            {'name':'z', 'value':{'doubleValue': z}},
+        ]
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
+        sql = 'select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
+        result = execute_rds_statement(sql, sql_parameters)
+        log('rds_response get_block',result['records'])
         if rows:
             log('rows from sqlite',rows[0][0])
             return rows[0][0]
@@ -448,6 +379,7 @@ class Model(object):
         self.send_nick(client)
         # TODO: has left message if was already authenticated
         self.send_talk('%s has joined the game.' % client.nick)
+        agones_allocate()
     def on_chunk(self, client, p, q, key=0):
         packets = []
         p, q, key = map(int, (p, q, key))
@@ -455,9 +387,6 @@ class Model(object):
             'select rowid, x, y, z, w from block where '
             'p = :p and q = :q and rowid > :key;'
         )
-        #ddb
-        #rows print= execute_ddb_get_item(dynamodb_client,create_ddb_get_block_rowid(str(p),str(q),str(key)))
-        #rows = execute_query(dynamodb_client,create_ddb_get_item(str(p),str(q),str(key)))
         rows = self.execute(query, dict(p=p, q=q, key=key))
         max_rowid = 0
         blocks = 0
@@ -469,8 +398,6 @@ class Model(object):
             'select x, y, z, w from light where '
             'p = :p and q = :q;'
         )
-        #ddb
-        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_light(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
 
         lights = 0
@@ -481,8 +408,6 @@ class Model(object):
             'select x, y, z, face, text from sign where '
             'p = :p and q = :q;'
         )
-        #ddb
-        #rows = execute_ddb_get_item(dynamodb_client,create_ddb_get_sign(str(p),str(q)))
         rows = self.execute(query, dict(p=p, q=q))
         signs = 0
         for x, y, z, face, text in rows:
@@ -495,7 +420,7 @@ class Model(object):
         packets.append(packet(CHUNK, p, q))
         client.send_raw(''.join(packets))
     def on_block(self, client, x, y, z, w):
-        log('on_block','x='+str(x)+'y='+str(y)+'z='+str(z)+'w='+str(w))
+        log('on_block','x='+str(x)+' y='+str(y)+' z='+str(z)+' w='+str(w))
         x, y, z, w = map(int, (x, y, z, w))
         p, q = chunked(x), chunked(z)
         previous = self.get_block(x, y, z)
@@ -528,12 +453,21 @@ class Model(object):
             'insert or replace into block (p, q, x, y, z, w) '
             'values (:p, :q, :x, :y, :z, :w);'
         )
-        log('insert into sqlite',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
+        log('about to insert ',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_block(client, p, q, x, y, z, w)
-        #ddb
-        log('insert into ddb',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
-        execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Block',str(p), str(q), str(x), str(y), str(z), str(w)))
+
+        sql_parameters = [
+            {'name':'p', 'value':{'doubleValue': p}},
+            {'name':'q', 'value':{'doubleValue': q}},
+            {'name':'x', 'value':{'doubleValue': x}},
+            {'name':'y', 'value':{'doubleValue': y}},
+            {'name':'z', 'value':{'doubleValue': z}},
+            {'name':'w', 'value':{'doubleValue': w}},
+        ]
+        sql = 'insert into block (p, q, x, y, z, w) values (:p, :q, :x, :y, :z, :w) on conflict on constraint unique_block_pqxyz do UPDATE SET w = :w'
+        response = execute_rds_statement(sql, sql_parameters)
+        log('rds_response_on_block',response)
         for dx in range(-1, 2):
             for dz in range(-1, 2):
                 if dx == 0 and dz == 0:
@@ -550,11 +484,17 @@ class Model(object):
                 'delete from sign where '
                 'x = :x and y = :y and z = :z;'
             )
+            sql = 'delete from sign where x = :x and y = :y and z = :z'
+            response = execute_rds_statement(sql, sql_parameters)
+            log('rds_response_on_delete_sign',response)
             self.execute(query, dict(x=x, y=y, z=z))
             query = (
                 'update light set w = 0 where '
                 'x = :x and y = :y and z = :z;'
-           )
+            )
+            sql = 'update light set w = 0 where x = :x and y = :y and z = :z'
+            response = execute_rds_statement(sql, sql_parameters)
+            log('rds_response_on_update_light',response)
             self.execute(query, dict(x=x, y=y, z=z))
     def on_light(self, client, x, y, z, w):
         x, y, z, w = map(int, (x, y, z, w))
@@ -576,10 +516,11 @@ class Model(object):
             'insert or replace into light (p, q, x, y, z, w) '
             'values (:p, :q, :x, :y, :z, :w);'
         )
+        sql = 'insert or replace into light (p, q, x, y, z, w) values (:p, :q, :x, :y, :z, :w)'
+        response = execute_rds_statement(sql, sql_parameters)
+        log('rds_response_on_insert_to_light',response)
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_light(client, p, q, x, y, z, w)
-        #ddb
-        execute_ddb_put_item(dynamodb_client, create_ddb_put_item('Light',str(p), str(q), str(x), str(y), str(z), str(w)))
     def on_sign(self, client, x, y, z, face, *args):
         if AUTH_REQUIRED and client.user_id is None:
             client.send(TALK, 'Only logged in users are allowed to build.')
@@ -598,6 +539,9 @@ class Model(object):
                 'insert or replace into sign (p, q, x, y, z, face, text) '
                 'values (:p, :q, :x, :y, :z, :face, :text);'
             )
+            sql = 'insert or replace into sign (p, q, x, y, z, face, text) values (:p, :q, :x, :y, :z, :face, :text)'
+            response = execute_rds_statement(sql, sql_parameters)
+            log('rds_response_on_insert_to_sign',response)
             self.execute(query,
                 dict(p=p, q=q, x=x, y=y, z=z, face=face, text=text))
         else:
@@ -605,6 +549,9 @@ class Model(object):
                 'delete from sign where '
                 'x = :x and y = :y and z = :z and face = :face;'
             )
+            sql = 'delete from sign where x = :x and y = :y and z = :z and face = :face'
+            response = execute_rds_statement(sql, sql_parameters)
+            log('rds_response_on_delete_sign',response)
             self.execute(query, dict(x=x, y=y, z=z, face=face))
         self.send_sign(client, p, q, x, y, z, face, text)
     def on_position(self, client, x, y, z, rx, ry):
@@ -752,7 +699,7 @@ class Model(object):
         log(text)
         for client in self.clients:
             client.send(TALK, text)
-
+#TBD add PG
 def cleanup():
     world = World(None)
     conn = sqlite3.connect(DB_PATH)
@@ -763,7 +710,6 @@ def cleanup():
     count = 0
     total = 0
     delete_query = 'delete from block where x = %d and y = %d and z = %d;'
-    print 'begin;'
     for p, q in chunks:
         chunk = world.create_chunk(p, q)
         query = 'select x, y, z, w from block where p = :p and q = :q;'
@@ -779,8 +725,27 @@ def cleanup():
                 count += 1
                 print delete_query % (x, y, z)
     conn.close()
-    print 'commit;'
     print >> sys.stderr, '%d of %d blocks will be cleaned up' % (count, total)
+
+def agones_health():
+  url="http://localhost:"+agones_port+"/health"
+  req = urllib2.Request(url)
+  req.add_header('Content-Type','application/json')
+  req.add_data('')
+  while True:
+    r = urllib2.urlopen(req)
+    resp=r.getcode()
+    log('agones- Response code from agones health was:',resp)
+    time.sleep(10)
+
+def agones_allocate():
+  url="http://localhost:"+agones_port+"/allocate"
+  req = urllib2.Request(url)
+  req.add_header('Content-Type','application/json')
+  req.add_data('')
+  r = urllib2.urlopen(req)
+  resp=r.getcode()
+  log('agones- Response code from agones allocate was:',resp)
 
 def main():
     if len(sys.argv) == 2 and sys.argv[1] == 'cleanup':
@@ -791,6 +756,14 @@ def main():
         host = sys.argv[1]
     if len(sys.argv) > 2:
         port = int(sys.argv[2])
+    newpid=os.fork()
+    if newpid ==0:
+      log('agones-in child process about to call agones_health()')
+      agones_health()
+      log('agones-in child process called agones_health()')
+    else:
+      pids = (os.getpid(), newpid)
+      log('agones server pid and health pid',pids)
     log('SERV', host, port)
     model = Model(None)
     model.start()
