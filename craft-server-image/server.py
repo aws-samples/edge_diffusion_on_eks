@@ -77,6 +77,7 @@ except ImportError:
 
 
 def execute_rds_statement(sql, sql_parameters=[]):
+    log('execute_rds_statement',sql,sql_parameters)
     response = rds_client.execute_statement(
         secretArn=secret_arn,
         database=database_name,
@@ -198,6 +199,7 @@ class Handler(SocketServer.BaseRequestHandler):
 
 class Model(object):
     def __init__(self, seed):
+        #log('Model-__init__',seed)
         self.world = World(seed)
         self.clients = []
         self.queue = Queue.Queue()
@@ -297,7 +299,7 @@ class Model(object):
         chunk = self.world.get_chunk(p, q)
         return chunk.get((x, y, z), 0)
     def get_block(self, x, y, z):
-        log('get_block')
+        log('get_block-select from block')
         query = (
             'select w from block where '
             'p = :p and q = :q and x = :x and y = :y and z = :z;'
@@ -314,7 +316,7 @@ class Model(object):
         rows = list(self.execute(query, dict(p=p, q=q, x=x, y=y, z=z)))
         sql = 'select w from block where p = :p and q = :q and x = :x and y = :y and z = :z;'
         result = execute_rds_statement(sql, sql_parameters)
-        log('rds_response get_block',result['records'])
+        #log('rds_response get_block',result['records'])
         if rows:
             log('rows from sqlite',rows[0][0])
             return rows[0][0]
@@ -380,7 +382,9 @@ class Model(object):
         # TODO: has left message if was already authenticated
         self.send_talk('%s has joined the game.' % client.nick)
         agones_allocate()
+#TBD adopt PG to load the world from pg insed of craft.db
     def on_chunk(self, client, p, q, key=0):
+        #log('on_chunk-select from block',p,q)
         packets = []
         p, q, key = map(int, (p, q, key))
         query = (
@@ -390,10 +394,29 @@ class Model(object):
         rows = self.execute(query, dict(p=p, q=q, key=key))
         max_rowid = 0
         blocks = 0
-        for rowid, x, y, z, w in rows:
+        
+        sql_parameters = [
+            {'name':'p', 'value':{'doubleValue': p}},
+            {'name':'q', 'value':{'doubleValue': q}},
+            {'name':'key', 'value':{'doubleValue': key}},
+        ]
+        result = execute_rds_statement(query, sql_parameters)
+        log('rds_response on_chunk',result['records'])
+        for _row in result['records']:
+            rowid=_row[0]['longValue']
+            x=_row[1]['longValue']
+            y=_row[2]['longValue']
+            z=_row[3]['longValue']
+            w=_row[4]['longValue']
+            log('on_chunk-result[records]',rowid,x,y,z,w)
             blocks += 1
             packets.append(packet(BLOCK, p, q, x, y, z, w))
             max_rowid = max(max_rowid, rowid)
+        #for rowid, x, y, z, w in rows:
+            #log('on_chunk-rows',x,y,z,w)
+            #blocks += 1
+            #packets.append(packet(BLOCK, p, q, x, y, z, w))
+            #max_rowid = max(max_rowid, rowid)
         query = (
             'select x, y, z, w from light where '
             'p = :p and q = :q;'
@@ -419,8 +442,9 @@ class Model(object):
             packets.append(packet(REDRAW, p, q))
         packets.append(packet(CHUNK, p, q))
         client.send_raw(''.join(packets))
+
     def on_block(self, client, x, y, z, w):
-        log('on_block','x='+str(x)+' y='+str(y)+' z='+str(z)+' w='+str(w))
+        #log('on_block','x='+str(x)+' y='+str(y)+' z='+str(z)+' w='+str(w))
         x, y, z, w = map(int, (x, y, z, w))
         p, q = chunked(x), chunked(z)
         previous = self.get_block(x, y, z)
@@ -453,7 +477,7 @@ class Model(object):
             'insert or replace into block (p, q, x, y, z, w) '
             'values (:p, :q, :x, :y, :z, :w);'
         )
-        log('about to insert ',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
+        #log('about to insert ',str(p)+' '+str(q)+' '+str(x)+' '+str(y)+' '+str(z)+' '+str(w))
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_block(client, p, q, x, y, z, w)
 
@@ -467,7 +491,7 @@ class Model(object):
         ]
         sql = 'insert into block (p, q, x, y, z, w) values (:p, :q, :x, :y, :z, :w) on conflict on constraint unique_block_pqxyz do UPDATE SET w = :w'
         response = execute_rds_statement(sql, sql_parameters)
-        log('rds_response_on_block',response)
+        #log('rds_response_on_block',response)
         for dx in range(-1, 2):
             for dz in range(-1, 2):
                 if dx == 0 and dz == 0:
@@ -486,7 +510,7 @@ class Model(object):
             )
             sql = 'delete from sign where x = :x and y = :y and z = :z'
             response = execute_rds_statement(sql, sql_parameters)
-            log('rds_response_on_delete_sign',response)
+            #log('rds_response_on_delete_sign',response)
             self.execute(query, dict(x=x, y=y, z=z))
             query = (
                 'update light set w = 0 where '
@@ -494,7 +518,7 @@ class Model(object):
             )
             sql = 'update light set w = 0 where x = :x and y = :y and z = :z'
             response = execute_rds_statement(sql, sql_parameters)
-            log('rds_response_on_update_light',response)
+            #log('rds_response_on_update_light',response)
             self.execute(query, dict(x=x, y=y, z=z))
     def on_light(self, client, x, y, z, w):
         x, y, z, w = map(int, (x, y, z, w))
@@ -518,7 +542,7 @@ class Model(object):
         )
         sql = 'insert or replace into light (p, q, x, y, z, w) values (:p, :q, :x, :y, :z, :w)'
         response = execute_rds_statement(sql, sql_parameters)
-        log('rds_response_on_insert_to_light',response)
+        #log('rds_response_on_insert_to_light',response)
         self.execute(query, dict(p=p, q=q, x=x, y=y, z=z, w=w))
         self.send_light(client, p, q, x, y, z, w)
     def on_sign(self, client, x, y, z, face, *args):
@@ -541,7 +565,7 @@ class Model(object):
             )
             sql = 'insert or replace into sign (p, q, x, y, z, face, text) values (:p, :q, :x, :y, :z, :face, :text)'
             response = execute_rds_statement(sql, sql_parameters)
-            log('rds_response_on_insert_to_sign',response)
+            #log('rds_response_on_insert_to_sign',response)
             self.execute(query,
                 dict(p=p, q=q, x=x, y=y, z=z, face=face, text=text))
         else:
@@ -551,7 +575,7 @@ class Model(object):
             )
             sql = 'delete from sign where x = :x and y = :y and z = :z and face = :face'
             response = execute_rds_statement(sql, sql_parameters)
-            log('rds_response_on_delete_sign',response)
+            #log('rds_response_on_delete_sign',response)
             self.execute(query, dict(x=x, y=y, z=z, face=face))
         self.send_sign(client, p, q, x, y, z, face, text)
     def on_position(self, client, x, y, z, rx, ry):
@@ -699,8 +723,8 @@ class Model(object):
         log(text)
         for client in self.clients:
             client.send(TALK, text)
-#TBD add PG
 def cleanup():
+    log('cleanup')
     world = World(None)
     conn = sqlite3.connect(DB_PATH)
     query = 'select x, y, z from block order by rowid desc limit 1;'
@@ -748,6 +772,7 @@ def agones_allocate():
   log('agones- Response code from agones allocate was:',resp)
 
 def main():
+    log('main',sys.argv)
     if len(sys.argv) == 2 and sys.argv[1] == 'cleanup':
         cleanup()
         return
