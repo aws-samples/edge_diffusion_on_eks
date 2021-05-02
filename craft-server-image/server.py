@@ -45,7 +45,8 @@ AUTH_REQUIRED = False
 AUTH_URL = 'https://craft.michaelfogleman.com/api/1/access'
 
 DAY_LENGTH = 600
-SPAWN_POINT = (0, 0, 0, 0, 0)
+#SPAWN_POINT = (0, 0, 0, 0, 0)
+SPAWN_POINT = os.environ.get('SPAWN_POINT').split(",")
 RATE_LIMIT = False
 RECORD_HISTORY = False
 INDESTRUCTIBLE_ITEMS = set([16])
