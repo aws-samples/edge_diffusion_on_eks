@@ -14,6 +14,7 @@ import threading
 import time
 import traceback
 import os
+import signal
 import boto3
 import base64
 from botocore.exceptions import ClientError
@@ -382,7 +383,7 @@ class Model(object):
         self.send_nick(client)
         # TODO: has left message if was already authenticated
         self.send_talk('%s has joined the game.' % client.nick)
-        agones_allocate()
+        agones_allocate(self)
 #TBD adopt PG to load the world from pg insed of craft.db
     def on_chunk(self, client, p, q, key=0):
         #log('on_chunk-select from block',p,q)
@@ -724,6 +725,10 @@ class Model(object):
         log(text)
         for client in self.clients:
             client.send(TALK, text)
+
+model = Model(None)
+model.start()
+
 def cleanup():
     log('cleanup')
     world = World(None)
@@ -752,7 +757,7 @@ def cleanup():
     conn.close()
     print >> sys.stderr, '%d of %d blocks will be cleaned up' % (count, total)
 
-def agones_health():
+def agones_health(model):
   url="http://localhost:"+agones_port+"/health"
   req = urllib2.Request(url)
   req.add_header('Content-Type','application/json')
@@ -763,7 +768,7 @@ def agones_health():
     log('agones- Response code from agones health was:',resp)
     time.sleep(10)
 
-def agones_allocate():
+def agones_allocate(model):
   url="http://localhost:"+agones_port+"/allocate"
   req = urllib2.Request(url)
   req.add_header('Content-Type','application/json')
@@ -771,6 +776,11 @@ def agones_allocate():
   r = urllib2.urlopen(req)
   resp=r.getcode()
   log('agones- Response code from agones allocate was:',resp)
+  model.send_talk("new player joined - reporting to agones the server is allocated")
+
+def sig_handler(signum,frame):
+  log('Signal hanlder called with signal',signum)
+  model.send_talk("Game server maintenance is pending - pls reconnect - don't worry, your universe is saved with us")
 
 def main():
     log('main',sys.argv)
@@ -782,6 +792,12 @@ def main():
         host = sys.argv[1]
     if len(sys.argv) > 2:
         port = int(sys.argv[2])
+
+    #model = Model(None)
+    #model.start()
+    signal.signal(signal.SIGTERM,sig_handler)
+    server = Server((host, port), Handler)
+    server.model = model
     newpid=os.fork()
     if newpid ==0:
       log('agones-in child process about to call agones_health()')
@@ -791,10 +807,6 @@ def main():
       pids = (os.getpid(), newpid)
       log('agones server pid and health pid',pids)
     log('SERV', host, port)
-    model = Model(None)
-    model.start()
-    server = Server((host, port), Handler)
-    server.model = model
     server.serve_forever()
 
 if __name__ == '__main__':
