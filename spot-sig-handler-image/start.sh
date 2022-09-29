@@ -1,62 +1,48 @@
-#!/bin/sh
-
-echo "Starting the spot int handler"
-
-
-if [ "${QUEUE_URL}" == "" ]; then
-  echo '[ERROR] Environment variable `QUEUE_URL` has no value set.' 1>&2
-  exit 1
+#!/bin/bash
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+if [ -z "$TOKEN" ]
+then
+  echo "No token for IMDS_v2 - check /api/token url"
+  exit
 fi
-
-if [ "${NAMESPACE}" == "" ]; then
-  echo '[ERROR] Environment variable `NAMESPACE` has no value set.' 1>&2
-  exit 1
+NODE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" 169.254.169.254/latest/meta-data/local-hostname)
+if [ -z "$NODE" ]
+then
+  echo "No node name - check /meta-data/local-hostname"
+  exit
 fi
-
-if [ "${POD_NAME}" == "" ]; then
-  echo '[ERROR] Environment variable `POD_NAME` has no value set.' 1>&2
-  exit 1
+echo "NODE="$NODE
+INSTANCE_TYPE=$(kubectl get no $NODE -L node.kubernetes.io/instance-type | grep -v NAME| awk '{print $NF}')
+if [ -z "$INSTANCE_TYPE" ]
+then
+  echo "No instance type"
+  exit
 fi
-
-echo "Getting the node name"
-NODE_NAME=$(kubectl --namespace ${NAMESPACE} get pod ${POD_NAME} --output jsonpath="{.spec.nodeName}")
-echo NODE_NAME=${NODE_NAME}
-
-if [ "${NODE_NAME}" == "" ]; then
-  echo "[ERROR] Unable to fetch the name of the node running the pod \"${POD_NAME}\" in the namespace \"${NAMESPACE}\"." 1>&2
-  exit 1
+echo INSTANCE_TYPE=$INSTANCE_TYPE
+echo aws cloudwatch put-metric-data --metric-name $INSTANCE_TYPE --namespace spot-sig --value 1 
+aws cloudwatch put-metric-data --metric-name $INSTANCE_TYPE --namespace spot-sig --value 1 
+echo "cloudwatch exit code="$?
+if (( $?>0 ))
+then
+  echo "ERR-CW"
 fi
-
-echo "Gather some information"
-INSTANCE_ID_URL=${INSTANCE_ID_URL:-http://169.254.169.254/latest/meta-data/instance-id}
-INSTANCE_ID=$(curl -s ${INSTANCE_ID_URL})
-echo INSTANCE_ID_URL=${INSTANCE_ID_URL}
-echo INSTANCE_ID=${INSTANCE_ID}
-
-echo "\`kubectl drain ${NODE_NAME}\` will be executed once a termination notice is made."
 
 
 POLL_INTERVAL=${POLL_INTERVAL:-5}
-#NOTICE_URL=${NOTICE_URL:-http://169.254.169.254/latest/meta-data/spot/termination-time}
 NOTICE_URL=${NOTICE_URL:-http://169.254.169.254/latest/meta-data/events/recommendations/rebalance}
 
 echo "Polling ${NOTICE_URL} every ${POLL_INTERVAL} second(s)"
 
-while http_status=$(curl -o /dev/null -w '%{http_code}' -sL ${NOTICE_URL}); [ ${http_status} -ne 200 ]; do
+while http_status=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -o /dev/null -w '%{http_code}' -sL ${NOTICE_URL}); [ ${http_status} -ne 200 ]; do
   echo $(date): ${http_status}
   sleep ${POLL_INTERVAL}
 done
 
-echo $(date): "events/recommendations/rebalance"
+echo $(date): ${NOTICE_URL}
 echo $(date): ${http_status}
 
-#MESSAGE="[{'status': 'spot termination', 'public_hostname': ${NODE_NAME}, 'public_port': NA, 'region': 'us-west'}]"
-#MESSAGE_GRP_ID="gsGrp_us-west-2"
-#aws sqs send-message --queue-url ${QUEUE_URL} --message-body "${MESSAGE}" --message-group-id ${MESSAGE_GRP_ID}
+echo aws cloudwatch put-metric-data --metric-name rebalance --namespace spot-sig --value 1 --dimensions node=$NODE
+aws cloudwatch put-metric-data --metric-name rebalance --namespace spot-sig --value 1 --dimensions node=$NODE
 
 echo "Draining the nodei due to spot rebalance recommendations."
-kubectl drain ${NODE_NAME} --force --ignore-daemonsets
-
-echo "Sleep for 200 seconds to prevent raise condition"
-# The instance should be terminated by the end of the sleep assumming 120 sec notification time. Rebalance recommendations might take longer
-sleep 200
+kubectl drain $NODE --force --ignore-daemonsets --delete-emptydir-data

@@ -47,7 +47,7 @@ roleRef:
   name: spot-interrupt-handler
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: spot-interrupt-handler
@@ -62,25 +62,15 @@ spec:
         app: spot-interrupt-handler
     spec:
       serviceAccountName: spot-interrupt-handler
-      hostNetwork: true
+      #hostNetwork: true
       containers:
       - name: spot-interrupt-handler
-        image: 163538056407.dkr.ecr.us-west-2.amazonaws.com/spot-sig-handler:0.1
+        image: 095974399802.dkr.ecr.us-west-2.amazonaws.com/spotsig:aarch64
         imagePullPolicy: Always
-        command: ["/start.sh"]
         env:
-        - name: AWS_DEFAULT_REGION
-          value: "us-west-2"
-        - name: QUEUE_URL
-          value: "https://sqs.us-west-2.amazonaws.com/356566070122/spotint.fifo"
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+          - name: AWS_DEFAULT_REGION
+            value: "us-west-2"
+          - name: NOTICE_URL
+            value: "http://169.254.169.254/latest/meta-data/spot/termination-time"
       nodeSelector:
-        lifecycle: Ec2Spot
-
+        karpenter.sh/capacity-type: spot
