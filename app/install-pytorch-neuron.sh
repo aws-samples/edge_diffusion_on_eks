@@ -5,7 +5,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
   apt-get install -y python3.10-venv g++ 
 
   # Create Python venv
-  python3.10 -m venv aws_neuron_venv_pytorch_inf1 
+  python3.10 -m venv aws_neuron_venv_pytorch_inf 
 
   # Activate Python venv 
   . aws_neuron_venv_pytorch_inf1/bin/activate 
@@ -13,7 +13,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
 
   # Install Jupyter notebook kernel
   pip install ipykernel 
-  python3.10 -m ipykernel install --user --name aws_neuron_venv_pytorch_inf1 --display-name "Python (torch-neuron)"
+  python3.10 -m ipykernel install --user --name aws_neuron_venv_pytorch_inf --display-name "Python (torch-neuron)"
   pip install jupyter notebook
   pip install environment_kernels
 

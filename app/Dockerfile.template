@@ -2,9 +2,8 @@ FROM $BASE_IMAGE
 
 RUN uname -a
 RUN apt-get update --fix-missing
-RUN apt-get install -y wget gnupg2
-ADD requirements.txt /requirements.txt
-
+RUN apt-get install -y wget gnupg2 
+RUN env TOKENIZERS_PARALLELISM=True
 COPY * /
 RUN pip install -r /requirements.txt
 RUN mkdir /config

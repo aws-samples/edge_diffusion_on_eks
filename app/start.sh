@@ -30,9 +30,9 @@ if [[ $instance_type == "trn1n.32xlarge" ]]; then
   echo "export PATH=/opt/aws/neuron/bin:\$PATH" >> /root/.bashrc
   echo "export TERM=screen" >> /root/.bashrc
   . /root/.bashrc
-  time echo placeholder
+  time /install-pytorch-neuron.sh
 elif [[ $instance_type == "g5.xlarge" ]]; then
-  time echo placeholder
+  time /install-pytorch-nvidia.sh
 else
   echo $instance_type" is not supported"
   exit
