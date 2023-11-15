@@ -1,0 +1,12 @@
+FROM $BASE_IMAGE
+
+RUN uname -a
+RUN apt-get update --fix-missing
+RUN apt-get install -y wget gnupg2
+ADD requirements.txt /requirements.txt
+
+COPY * /
+RUN pip install -r /requirements.txt
+RUN mkdir /config
+ADD config/main.yaml /config/main.yaml
+RUN ls -l /

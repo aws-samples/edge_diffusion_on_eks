@@ -1,0 +1,11 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Resources" : {
+    "spotsig" : {
+        "Type" : "AWS::ECR::Repository",
+        "Properties" : {
+            "RepositoryName" : "spotsig"
+        }
+    }
+  }
+}

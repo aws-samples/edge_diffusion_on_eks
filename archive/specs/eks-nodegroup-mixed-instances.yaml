@@ -1,0 +1,35 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: craft-us-west-2
+  region: us-west-2
+
+nodeGroups:
+  - name: spotx86
+    labels:
+      project: spotx86
+      lifecycle: Ec2Spot
+      aws.amazon.com/spot: "true"
+    maxSize: 10
+    minSize: 1
+    ssh:
+      allow: true
+      publicKeyPath: ~/.ssh/id_rsa.pub
+    instancesDistribution:
+      instanceTypes: ["r5dn.2xlarge","m5n.2xlarge","c5.2xlarge","c5d.2xlarge"]
+      onDemandPercentageAboveBaseCapacity: 0
+      onDemandBaseCapacity: 0
+      spotAllocationStrategy: "capacity-optimized"
+    taints:
+      spotInstance: "true:PreferNoSchedule"
+    tags:
+      k8s.io/cluster-autoscaler/node-template/label/lifecycle: Ec2Spot
+      k8s.io/cluster-autoscaler/node-template/label/project: craft
+      k8s.io/cluster-autoscaler/node-template/taint/spotInstance: "true:PreferNoSchedule"
+      k8s.io/cluster-autoscaler/node-template/label/aws.amazon.com/spot: "true"
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        cloudWatch: true
+        albIngress: true

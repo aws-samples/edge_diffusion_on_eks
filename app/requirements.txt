@@ -1,0 +1,16 @@
+av
+datasets
+db-dtypes
+einops
+fvcore>=0.1.5
+huggingface-hub>=0.15.1
+imageio
+lightning>=2.0.2
+opencv-python
+pyyaml
+scipy
+simplejson>=3.19.1
+tensorboard
+torch==1.13.1
+torchvision==0.14.1
+transformers>=4.29.2
