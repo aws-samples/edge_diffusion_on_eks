@@ -11,18 +11,16 @@ if [ "$(uname -i)" = "x86_64" ]; then
   . aws_neuron_venv_pytorch_inf1/bin/activate 
   python -m pip install -U pip 
 
-  # Install Jupyter notebook kernel
-  pip install ipykernel 
-  python3.10 -m ipykernel install --user --name aws_neuron_venv_pytorch_inf --display-name "Python (torch-neuron)"
-  pip install jupyter notebook
-  pip install environment_kernels
-
   # Set pip repository pointing to the Neuron repository 
   python -m pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
 
-  # Install PyTorch Neuron
-  #python -m pip install torch-neuron neuron-cc[tensorflow] "protobuf" torchvision
-  python -m pip install --force-reinstall torch-neuronx==1.13.1.* neuronx-cc==2.* --extra-index-url https://pip.repos.neuron.amazonaws.com
-  pip install -r requirements.txt
+  # Install wget, awscli
+  python -m pip install wget
+  python -m pip install awscli
+
+  # Install Neuron Compiler and Framework
+  python -m pip install neuronx-cc==2.* torch-neuronx torchvision
+  env TOKENIZERS_PARALLELISM=True #Supresses tokenizer warnings making errors easier to detect
+  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow -U
   deactivate
 fi
