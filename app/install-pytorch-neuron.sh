@@ -21,7 +21,9 @@ if [ "$(uname -i)" = "x86_64" ]; then
 
   # Install Neuron Compiler and Framework
   python -m pip install neuronx-cc==2.* torch-neuronx torchvision
+
+  # Install model specific packages
   env TOKENIZERS_PARALLELISM=True #Supresses tokenizer warnings making errors easier to detect
-  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow -U
+  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow ipython -U
   deactivate
 fi
