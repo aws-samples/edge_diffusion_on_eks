@@ -25,6 +25,7 @@ if [[ $instance_type == "inf2."* ]]; then
   echo "export TERM=screen" >> /root/.bashrc
   . /root/.bashrc
   time /install-pytorch-neuron.sh
+  time /compile-run-model.sh
 elif [[ $instance_type == "g5."* ]]; then
   time /install-pytorch-nvidia.sh
 else
