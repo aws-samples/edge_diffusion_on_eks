@@ -5,10 +5,11 @@ if [ "$(uname -i)" = "x86_64" ]; then
   apt-get install -y python3.10-venv g++ 
 
   # Create Python venv
-  python3.10 -m venv aws_neuron_venv_pytorch_inf 
+  python -m venv aws_neuron_venv_pytorch_inf 
 
   # Activate Python venv 
-  . aws_neuron_venv_pytorch_inf1/bin/activate 
+  . aws_neuron_venv_pytorch_inf/bin/activate 
+
   python -m pip install -U pip 
 
   # Set pip repository pointing to the Neuron repository 
