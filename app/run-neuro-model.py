@@ -27,6 +27,90 @@ else:
 
 clear_output(wait=False)
 
+def get_attention_scores(self, query, key, attn_mask):    
+    dtype = query.dtype
+
+    if self.upcast_attention:
+        query = query.float()
+        key = key.float()
+
+    if(query.size() == key.size()):
+        attention_scores = cust_badbmm(
+            key,
+            query.transpose(-1, -2),
+            self.scale
+        )
+
+        if self.upcast_softmax:
+            attention_scores = attention_scores.float()
+
+        attention_probs = torch.nn.functional.softmax(attention_scores, dim=1).permute(0,2,1)
+        attention_probs = attention_probs.to(dtype)
+
+    else:
+        attention_scores = cust_badbmm(
+            query,
+            key.transpose(-1, -2),
+            self.scale
+        )
+
+        if self.upcast_softmax:
+            attention_scores = attention_scores.float()
+
+        attention_probs = torch.nn.functional.softmax(attention_scores, dim=-1)
+        attention_probs = attention_probs.to(dtype)
+        
+    return attention_probs
+
+
+def cust_badbmm(a, b, scale):
+    bmm = torch.bmm(a, b)
+    scaled = bmm * scale
+    return scaled
+
+
+class UNetWrap(nn.Module):
+    def __init__(self, unet):
+        super().__init__()
+        self.unet = unet
+
+    def forward(self, sample, timestep, encoder_hidden_states, cross_attention_kwargs=None):
+        out_tuple = self.unet(sample, timestep, encoder_hidden_states, return_dict=False)
+        return out_tuple
+    
+
+class NeuronUNet(nn.Module):
+    def __init__(self, unetwrap):
+        super().__init__()
+        self.unetwrap = unetwrap
+        self.config = unetwrap.unet.config
+        self.in_channels = unetwrap.unet.in_channels
+        self.device = unetwrap.unet.device
+
+    def forward(self, sample, timestep, encoder_hidden_states, cross_attention_kwargs=None, return_dict=False):
+        sample = self.unetwrap(sample, timestep.float().expand((sample.shape[0],)), encoder_hidden_states)[0]
+        return UNet2DConditionOutput(sample=sample)
+
+
+class NeuronTextEncoder(nn.Module):
+    def __init__(self, text_encoder):
+        super().__init__()
+        self.neuron_text_encoder = text_encoder
+        self.config = text_encoder.config
+        self.dtype = torch.float32
+        self.device = text_encoder.device
+
+    def forward(self, emb, attention_mask = None):
+        return [self.neuron_text_encoder(emb)['last_hidden_state']]
+
+
+class NeuronSafetyModelWrap(nn.Module):
+    def __init__(self, safety_model):
+        super().__init__()
+        self.safety_model = safety_model
+
+    def forward(self, clip_inputs):
+        return list(self.safety_model(clip_inputs).values())
 
 
 # --- Load all compiled models ---
