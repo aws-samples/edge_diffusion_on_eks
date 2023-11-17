@@ -1,3 +1,34 @@
+import os
+os.environ["NEURON_FUSE_SOFTMAX"] = "1"
+
+import torch
+import torch.nn as nn
+import torch_neuronx
+import numpy as np
+
+from matplotlib import pyplot as plt
+from matplotlib import image as mpimg
+import time
+import copy
+from IPython.display import clear_output
+
+from diffusers import StableDiffusionPipeline
+from diffusers.models.unet_2d_condition import UNet2DConditionOutput
+
+# Compatibility for diffusers<0.18.0
+from packaging import version
+import diffusers
+diffusers_version = version.parse(diffusers.__version__)
+use_new_diffusers = diffusers_version >= version.parse('0.18.0')
+if use_new_diffusers:
+    from diffusers.models.attention_processor import Attention
+else:
+    from diffusers.models.cross_attention import CrossAttention
+
+clear_output(wait=False)
+
+
+
 # --- Load all compiled models ---
 COMPILER_WORKDIR_ROOT = 'sd_1_5_fp32_512_compile_workdir'
 
