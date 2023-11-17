@@ -18,6 +18,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
   # Install wget, awscli
   python -m pip install wget
   python -m pip install awscli
+  python -m pip install gradio
 
   # Install Neuron Compiler and Framework
   python -m pip install neuronx-cc==2.* torch-neuronx torchvision

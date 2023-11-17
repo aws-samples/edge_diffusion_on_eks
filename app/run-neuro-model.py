@@ -15,6 +15,8 @@ from IPython.display import clear_output
 from diffusers import StableDiffusionPipeline
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
+import gradio as gr
+
 print("# Compatibility for diffusers<0.18.0",flush=True)
 from packaging import version
 import diffusers
@@ -166,3 +168,21 @@ for x in prompt:
     plt.imshow(image)
     plt.show()
 print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds",flush=True)
+
+def text2img(PROMPT, INFERENCE_STEPS=50, GUIDANCE_SCALE=7.5):
+    start_time = time.time()
+    image = pipe(x).images[0]
+    total_time = total_time + (time.time()-start_time)
+    image.save("image.png")
+    image = mpimg.imread("image.png")
+    return image, str(total_time)
+
+
+app = gr.Interface(fn=text2img,
+    inputs=["text", gr.Slider(1, 100, step=1, label='Inference steps (bigger is better in quality but slower)', value = 50), 
+            gr.Slider(1, 10, label='Guidance scale (bigger means image resembles closer to prompt)', value=7.5)],
+    outputs = [gr.Image(height=768, width=768), "text"],
+    title = 'Stable Diffusion 1.5 in AWS EC2 Inf2 instance')
+app.queue()
+app.launch(share = True, debug = False)
+
