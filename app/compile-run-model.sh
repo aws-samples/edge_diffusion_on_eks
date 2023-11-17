@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 . aws_neuron_venv_pytorch_inf/bin/activate
 time python /compile-neuron-model.py

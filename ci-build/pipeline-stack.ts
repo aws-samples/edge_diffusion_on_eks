@@ -22,13 +22,13 @@ export class PipelineStack extends Stack {
   const GITHUB_USER = new CfnParameter(this,"GITHUBUSER",{type:"String"});
   const GITHUB_REPO = new CfnParameter(this,"GITHUBREPO",{type:"String"});
   const GITHUB_BRANCH = new CfnParameter(this,"GITHUBBRANCH",{type:"String"});
-  /**/ uncomment when you test the stack and dont want to manually delete the ecr registry 
+  /* uncomment when you test the stack and dont want to manually delete the ecr registry 
   const base_registry = new ecr.Repository(this,`base_repo`,{
     repositoryName:BASE_REPO.valueAsString,
     imageScanOnPush: true
   });
-  /**/
-  //const base_registry = ecr.Repository.fromRepositoryName(this,`base_repo`,BASE_REPO.valueAsString)
+  */
+  const base_registry = ecr.Repository.fromRepositoryName(this,`base_repo`,BASE_REPO.valueAsString)
 
   //create a roleARN for codebuild 
   const buildRole = new iam.Role(this, 'BaseCodeBuildDeployRole',{
