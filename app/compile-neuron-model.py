@@ -15,7 +15,7 @@ from IPython.display import clear_output
 from diffusers import StableDiffusionPipeline
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
-# Compatibility for diffusers<0.18.0
+print("# Compatibility for diffusers<0.18.0",flush=True)
 from packaging import version
 import diffusers
 diffusers_version = version.parse(diffusers.__version__)
@@ -121,12 +121,12 @@ model_id = "runwayml/stable-diffusion-v1-5"
 
 # --- Compile CLIP text encoder and save ---
 
-# Only keep the model being compiled in RAM to minimze memory pressure
+print("# Only keep the model being compiled in RAM to minimze memory pressure",flush=True)
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
 text_encoder = copy.deepcopy(pipe.text_encoder)
 del pipe
 
-# Apply the wrapper to deal with custom return type
+print("# Apply the wrapper to deal with custom return type",flush=True)
 text_encoder = NeuronTextEncoder(text_encoder)
 
 # Compile text encoder
@@ -149,24 +149,24 @@ with torch.no_grad():
             compiler_args=["--enable-fast-loading-neuron-binaries"]
             )
 
-# Save the compiled text encoder
+print("# Save the compiled text encoder",flush=True)
 text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
 torch_neuronx.async_load(text_encoder_neuron)
 torch.jit.save(text_encoder_neuron, text_encoder_filename)
 
-# delete unused objects
+print("# delete unused objects",flush=True)
 del text_encoder
 del text_encoder_neuron
 del emb
 
 # --- Compile VAE decoder and save ---
 
-# Only keep the model being compiled in RAM to minimze memory pressure
+print("# Only keep the model being compiled in RAM to minimze memory pressure",flush=True)
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
 decoder = copy.deepcopy(pipe.vae.decoder)
 del pipe
 
-# # Compile vae decoder
+print("# # Compile vae decoder",flush=True)
 decoder_in = torch.randn([1, 4, 64, 64])
 with torch.no_grad():
     decoder_neuron = torch_neuronx.trace(
@@ -178,12 +178,12 @@ with torch.no_grad():
 
 
 
-# Save the compiled vae decoder
+print("# Save the compiled vae decoder",flush=True)
 decoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')
 torch_neuronx.async_load(decoder_neuron)
 torch.jit.save(decoder_neuron, decoder_filename)
 
-# delete unused objects
+print("# delete unused objects",flush=True)
 del decoder
 del decoder_in
 del decoder_neuron
@@ -220,7 +220,7 @@ with torch.no_grad():
     )
 
 
-# save compiled unet
+print("# save compiled unet",flush=True)
 unet_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')
 torch_neuronx.async_load(unet_neuron)
 torch_neuronx.lazy_load(unet_neuron)
