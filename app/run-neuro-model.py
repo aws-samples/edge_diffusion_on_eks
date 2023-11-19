@@ -184,5 +184,5 @@ app = gr.Interface(fn=text2img,
     outputs = [gr.Image(height=768, width=768), "text"],
     title = 'Stable Diffusion 1.5 in AWS EC2 Inf2 instance')
 app.queue()
-app.launch(share = True,,server_name="0.0.0.0",debug = False)
+app.launch(share = True,server_name="0.0.0.0",debug = False)
 
