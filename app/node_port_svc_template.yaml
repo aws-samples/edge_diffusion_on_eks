@@ -4,9 +4,9 @@ metadata:
   name: $SVC_NAME
 spec:
   selector:
-    gamepod: $POD_NAME
+    app: stablediffusion-inf
   ports:
     - protocol: TCP
       port: 7860
-      targetPort:  7860
+      targetPort: 7860
   type: NodePort
