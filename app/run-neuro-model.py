@@ -172,7 +172,7 @@ print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds",flush=T
 def text2img(PROMPT, INFERENCE_STEPS=50, GUIDANCE_SCALE=7.5):
     start_time = time.time()
     image = pipe(x).images[0]
-    total_time = total_time + (time.time()-start_time)
+    total_time =  time.time()-start_time
     image.save("image.png")
     image = mpimg.imread("image.png")
     return image, str(total_time)
