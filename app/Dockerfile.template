@@ -2,6 +2,7 @@ FROM $BASE_IMAGE
 
 RUN uname -a
 RUN apt-get update --fix-missing
+RUN apt-get install -y net-tools
 COPY * /
 RUN mkdir /config
 ADD config/main.yaml /config/main.yaml
