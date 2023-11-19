@@ -4,7 +4,7 @@ metadata:
   name: $SVC_NAME
 spec:
   selector:
-    app: stablediffusion-inf
+    inferencepod: $POD_NAME
   ports:
     - protocol: TCP
       port: 7860
