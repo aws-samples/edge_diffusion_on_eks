@@ -1,4 +1,9 @@
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE as base
+
+FROM $ASSETS_IMAGE AS assets
+
+FROM base AS model
+COPY --from=1 /model-assets /model-assets
 
 RUN uname -a
 RUN apt-get update --fix-missing

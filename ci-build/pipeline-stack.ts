@@ -38,7 +38,7 @@ export class PipelineStack extends Stack {
   
   buildRole.addToPolicy(new iam.PolicyStatement({
     resources: ['*'],
-    actions: ['ssm:*'],
+    actions: ['ssm:*','s3:*'],
   }));
 
   const githubSecret = new secretsmanager.Secret(this, 'githubSecret', {

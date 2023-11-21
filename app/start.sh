@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-cd /
+STAGE=$1
 
 token=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 if [ -z "$token" ]; then
@@ -25,7 +25,14 @@ if [[ $instance_type == "inf2."* ]]; then
   echo "export TERM=screen" >> /root/.bashrc
   . /root/.bashrc
   time /install-pytorch-neuron.sh
-  time /compile-run-model.sh
+  if [[ $STAGE == "compile" ]]; then
+    time /compile-neuron-model.sh
+  elif [[ $STAGE == "run" ]]; then
+    time /run-neuron-model.sh
+  else
+    echo "stage " $STAGE" is not supported"
+    exit
+  fi
 elif [[ $instance_type == "g5."* ]]; then
   time /install-pytorch-nvidia.sh
 else
