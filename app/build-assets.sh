@@ -3,6 +3,5 @@
 ASSETS="-assets"
 export IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BASE_REPO:$IMAGE_TAG$ASSETS
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $IMAGE
-ls -l 
-docker build -t $IMAGE ./Dockerfile-assets
+docker build -t $IMAGE -f Dockerfile-assets .
 docker push $IMAGE
