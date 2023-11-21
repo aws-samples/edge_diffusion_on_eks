@@ -1,0 +1,6 @@
+FROM public.ecr.aws/docker/library/python:latest
+RUN apt-get update -y --fix-missing
+
+#RUN python -m pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
+RUN python -m pip install wget
+RUN python -m pip install awscli
