@@ -3,7 +3,8 @@ RUN apt-get update -y --fix-missing
 
 RUN python -m pip install wget
 RUN python -m pip install awscli
-RUN aws s3 cp s3://sdinfer/sd_1_5_fp32_512_compile_workdir.tar.gz /
+#RUN aws s3 cp s3://sdinfer/sd_1_5_fp32_512_compile_workdir.tar.gz /
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd_1_5_fp32_512_compile_workdir.tar.gz -O /sd_1_5_fp32_512_compile_workdir.tar.gz
 RUN tar -xzvf /sd_1_5_fp32_512_compile_workdir.tar.gz
 RUN ls /
 RUN ls /sd_1_5_fp32_512_compile_workdir
