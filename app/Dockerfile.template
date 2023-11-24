@@ -3,9 +3,11 @@ FROM $BASE_IMAGE as base
 FROM $ASSETS_IMAGE AS assets
 
 FROM base AS model
-COPY --from=1 /model-assets /model-assets
+COPY --from=1 /model.tar.gz /model-assets/model.tar.gz
 
-RUN uname -a
+RUN tar -xvzf /model-assets/model.tar.gz -C /model-assets
+RUN ls -l
+RUN ls -l /model-assets
 RUN apt-get update --fix-missing
 RUN apt-get install -y net-tools
 COPY * /
