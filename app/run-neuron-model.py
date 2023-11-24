@@ -180,8 +180,7 @@ def text2img(PROMPT, INFERENCE_STEPS=50, GUIDANCE_SCALE=7.5):
 
 
 app = gr.Interface(fn=text2img,
-    inputs=["text", gr.Slider(1, 100, step=1, label='Inference steps (bigger is better in quality but slower)', value = 50), 
-            gr.Slider(1, 10, label='Guidance scale (bigger means image resembles closer to prompt)', value=7.5)],
+    inputs=["text"],
     outputs = [gr.Image(height=768, width=768), "text"],
     title = 'Stable Diffusion 1.5 in AWS EC2 Inf2 instance')
 app.queue()
