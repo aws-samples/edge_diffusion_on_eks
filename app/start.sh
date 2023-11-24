@@ -28,6 +28,7 @@ if [[ $instance_type == "inf2."* ]]; then
   if [[ $STAGE == "compile" ]]; then
     time /compile-neuron-model.sh
   elif [[ $STAGE == "run" ]]; then
+    time /create_node_port_svc.sh
     time /run-neuron-model.sh
   else
     echo "stage " $STAGE" is not supported"
