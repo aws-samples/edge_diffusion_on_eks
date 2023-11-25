@@ -117,7 +117,7 @@ class NeuronSafetyModelWrap(nn.Module):
 
 # --- Load all compiled models ---
 #COMPILER_WORKDIR_ROOT = 'sd_1_5_fp32_512_compile_workdir'
-COMPILER_WORKDIR_ROOT = 'model-assets'
+COMPILER_WORKDIR_ROOT = 'sd_1_5_fp32_512_compile_workdir'
 
 print("# Model ID for SD version pipeline",flush=True)
 model_id = "runwayml/stable-diffusion-v1-5"
