@@ -8,3 +8,4 @@ time python /compile-neuron-model.py
 deactivate
 tar -czvf /sd_1_5_fp32_512_compile_workdir.tar.gz /sd_1_5_fp32_512_compile_workdir/
 aws s3 cp /sd_1_5_fp32_512_compile_workdir.tar.gz s3://sdinfer/sd_1_5_fp32_512_compile_workdir.tar.gz
+aws s3api put-object-acl --bucket sdinfer --key sd_1_5_fp32_512_compile_workdir.tar.gz --acl public-read
