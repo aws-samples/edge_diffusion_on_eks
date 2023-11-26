@@ -184,9 +184,10 @@ for x in prompt:
     plt.show()
 print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 
-def text2img():
+def text2img(PROMPT):
     start_time = time.time()
-    image = pipe(x).images[0]
+    image = pipe(PROMPT).images[0]
+    #image = pipe(x).images[0]
     total_time =  time.time()-start_time
     r1 = random.randint(0,99999)
     imgname="image"+str(r1)+".png"
