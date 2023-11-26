@@ -1,4 +1,5 @@
 print("import",flush=True)
+import random
 import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
 
@@ -165,25 +166,35 @@ prompt = ["a photo of an astronaut riding a horse on mars",
 # First do a warmup run so all the asynchronous loads can finish
 image_warmup = pipe(prompt[0]).images[0]
 
-plt.title("Image")
-plt.xlabel("X pixel scaling")
-plt.ylabel("Y pixels scaling")
+#plt.title("Image")
+#plt.xlabel("X pixel scaling")
+#plt.ylabel("Y pixels scaling")
 
 total_time = 0
-for x in prompt:
+#for x in prompt:
+#    start_time = time.time()
+#    image = pipe(x).images[0]
+#    total_time = total_time + (time.time()-start_time)
+#    image.save(x+".png")
+#    image = mpimg.imread(x+".png")
+    #clear_output(wait=True)
+#    plt.imshow(image)
+#    plt.show()
+#print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
+
+def text2img():
     start_time = time.time()
     image = pipe(x).images[0]
-    total_time = total_time + (time.time()-start_time)
-    image.save("image.png")
-    image = mpimg.imread("image.png")
-    #clear_output(wait=True)
-    plt.imshow(image)
-    plt.show()
-print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
+    total_time =  time.time()-start_time
+    r1 = random.randint(0, 10)
+    imgname="image"+str(r1)+".png"
+    image.save(imgname)
+    image = mpimg.imread(imgname)
+    return image, str(total_time)
 
 app = gr.Interface(fn=text2img,
     inputs=["text"],
-    outputs = [gr.Image(height=768, width=768), "text"],
+    outputs = [gr.Image(height=512, width=512), "text"],
     title = 'Stable Diffusion 2.1 in AWS EC2 Inf2 instance')
 app.queue()
 app.launch(share = True,server_name="0.0.0.0",debug = False)
