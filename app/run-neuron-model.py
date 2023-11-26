@@ -171,22 +171,24 @@ image_warmup = pipe(prompt[0]).images[0]
 #plt.ylabel("Y pixels scaling")
 
 total_time = 0
-#for x in prompt:
-#    start_time = time.time()
-#    image = pipe(x).images[0]
-#    total_time = total_time + (time.time()-start_time)
-#    image.save(x+".png")
-#    image = mpimg.imread(x+".png")
-    #clear_output(wait=True)
-#    plt.imshow(image)
-#    plt.show()
-#print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
+for x in prompt:
+    start_time = time.time()
+    image = pipe(x).images[0]
+    total_time = total_time + (time.time()-start_time)
+    r1 = random.randint(0,99999)
+    imgname="image"+str(r1)+".png"
+    image.save(imgname)
+    image = mpimg.imread(imgname)
+    clear_output(wait=True)
+    plt.imshow(image)
+    plt.show()
+print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 
 def text2img():
     start_time = time.time()
     image = pipe(x).images[0]
     total_time =  time.time()-start_time
-    r1 = random.randint(0, 10)
+    r1 = random.randint(0,99999)
     imgname="image"+str(r1)+".png"
     image.save(imgname)
     image = mpimg.imread(imgname)
