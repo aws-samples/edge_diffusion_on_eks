@@ -1,0 +1,36 @@
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: amd-nvidia
+spec:
+  requirements:
+    - key: karpenter.k8s.aws/instance-family
+      operator: In
+      values: ["g5","p5"]
+    - key: kubernetes.io/arch
+      operator: In
+      values: ["amd64"]
+  limits:
+  providerRef:
+    name: amd-nvidia
+  ttlSecondsAfterEmpty: 30
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: amd-nvidia
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: ai-usw2
+  securityGroupSelector:
+    karpenter.sh/discovery: ai-usw2
+#  amiSelector:
+#   aws::ids: "ami-051f84ff16e7d78c4"
+  tags:
+    InstanceType: "nvidia"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 300Gi
+        volumeType: gp3
+        encrypted: true
