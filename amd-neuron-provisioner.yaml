@@ -1,0 +1,36 @@
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: amd-neuron
+spec:
+  requirements:
+    - key: karpenter.k8s.aws/instance-family
+      operator: In
+      values: ["inf2"]
+    - key: kubernetes.io/arch
+      operator: In
+      values: ["amd64"]
+  limits:
+  providerRef:
+    name: amd-neuron
+  ttlSecondsAfterEmpty: 30
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: amd-neuron
+spec:
+  subnetSelector:
+    karpenter.sh/subnet/discovery: ai-usw2-public
+  securityGroupSelector:
+    karpenter.sh/discovery: ai-usw2
+#  amiSelector:
+#   aws::ids: "ami-051f84ff16e7d78c4"
+  tags:
+    InstanceType: "inferentia"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 300Gi
+        volumeType: gp3
+        encrypted: true
