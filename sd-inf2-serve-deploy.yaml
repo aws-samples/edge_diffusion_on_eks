@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: stablediffusion-serve-inf
+  name: stablediffusion-serve-inf
+spec:
+  selector:
+    matchLabels:
+      app: stablediffusion-serve-inf
+  template:
+    metadata:
+      labels:
+        app: stablediffusion-serve-inf
+    spec:
+      nodeSelector:
+        karpenter.sh/provisioner-name: amd-neuron
+      serviceAccountName: appsimulator
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      containers:
+      - name: app
+        image: 133573815653.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-neuron
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+        command: ["/start.sh"]
+        args: ["run"]
+        resources:
+          limits:
+            aws.amazon.com/neuron: 6
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/create_node_port_svc.sh"]
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","kubectl delete svc `kubectl get svc|grep $POD_NAME | awk '{print $1}'`"]
+        env:
+        - name: AWS_NEURON_VISIBLE_DEVICES
+          value: "ALL"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
