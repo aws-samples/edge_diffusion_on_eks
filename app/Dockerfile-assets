@@ -6,12 +6,11 @@ RUN python -m pip install wget
 RUN python -m pip install awscli
 
 FROM base AS assets-amd64-cuda
-RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_cuda.tar.gz -O /model.tar.gz
-ENV VAR=nvidia
+ENV VAR=cuda
 
 FROM base AS assets-amd64-neuron
-RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_xla.tar.gz -O /model.tar.gz
-ENV VAR=neuron
+ENV VAR=xla
 
 FROM assets-${ai_chip} AS final
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
