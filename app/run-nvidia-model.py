@@ -17,6 +17,56 @@ from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 import gradio as gr
 
+# Compatibility for diffusers<0.18.0
+from packaging import version
+import diffusers
+diffusers_version = version.parse(diffusers.__version__)
+use_new_diffusers = diffusers_version >= version.parse('0.18.0')
+if use_new_diffusers:
+    from diffusers.models.attention_processor import Attention
+else:
+    from diffusers.models.cross_attention import CrossAttention
+
+# Define datatype
+DTYPE = torch.bfloat16
+
+clear_output(wait=False)
+
+print("Define utility classes and functions",flush=True)
+
+# Optimized attention
+def get_attention_scores(self, query, key, attn_mask):       
+    dtype = query.dtype
+
+    if self.upcast_attention:
+        query = query.float()
+        key = key.float()
+
+    # Check for square matmuls
+    if(query.size() == key.size()):
+        attention_scores = custom_badbmm(
+            key,
+            query.transpose(-1, -2)
+        )
+
+        if self.upcast_softmax:
+            attention_scores = attention_scores.float()
+
+        attention_probs = attention_scores.softmax(dim=1).permute(0,2,1)
+        attention_probs = attention_probs.to(dtype)
+
+    else:
+        attention_scores = custom_badbmm(
+            query,
+            key.transpose(-1, -2)
+        )
+
+        if self.upcast_softmax:
+            attention_scores = attention_scores.float()
+
+        attention_probs = attention_scores.softmax(dim=-1)
+        attention_probs = attention_probs.to(dtype)
+        
     return attention_probs
 
 def custom_badbmm(a, b):
@@ -43,30 +93,11 @@ unet_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')
 post_quant_conv_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_post_quant_conv/model.pt')
 
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
+pipe = pipe.to("cuda")
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
 # Replaces StableDiffusionPipeline's decode_latents method with our custom decode_latents method defined above.
 StableDiffusionPipeline.decode_latents = decode_latents
-
-# Load the compiled UNet onto two neuron cores.
-pipe.unet = NeuronUNet(UNetWrap(pipe.unet))
-device_ids = [0,1]
-pipe.unet.unetwrap = torch_neuronx.DataParallel(torch.jit.load(unet_filename), device_ids, set_dynamic_batching=False)
-
-# Load other compiled models onto a single neuron core.
-pipe.text_encoder = NeuronTextEncoder(pipe.text_encoder)
-pipe.text_encoder.neuron_text_encoder = torch.jit.load(text_encoder_filename)
-
-class NeuronTypeConversionWrapper(nn.Module):
-    def __init__(self, post_quant_conv):
-        super().__init__()
-        self.network = post_quant_conv
-
-    def forward(self, x):
-        return self.network(x.float())
-        
-pipe.vae.decoder = NeuronTypeConversionWrapper(torch.jit.load(decoder_filename))
-pipe.vae.post_quant_conv = NeuronTypeConversionWrapper(torch.jit.load(post_quant_conv_filename))
 
 # Run pipeline
 prompt = ["a photo of an astronaut riding a horse on mars",
@@ -81,10 +112,6 @@ prompt = ["a photo of an astronaut riding a horse on mars",
 
 # First do a warmup run so all the asynchronous loads can finish
 image_warmup = pipe(prompt[0]).images[0]
-
-#plt.title("Image")
-#plt.xlabel("X pixel scaling")
-#plt.ylabel("Y pixels scaling")
 
 total_time = 0
 for x in prompt:
@@ -103,7 +130,6 @@ print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 def text2img(PROMPT):
     start_time = time.time()
     image = pipe(PROMPT).images[0]
-    #image = pipe(x).images[0]
     total_time =  time.time()-start_time
     r1 = random.randint(0,99999)
     imgname="image"+str(r1)+".png"
@@ -114,6 +140,6 @@ def text2img(PROMPT):
 app = gr.Interface(fn=text2img,
     inputs=["text"],
     outputs = [gr.Image(height=512, width=512), "text"],
-    title = 'Stable Diffusion 2.1 in AWS EC2 Inf2 instance')
+    title = 'Stable Diffusion 2.1 in AWS EC2 G5 instance')
 app.queue()
 app.launch(share = True,server_name="0.0.0.0",debug = False)
