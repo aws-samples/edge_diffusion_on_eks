@@ -1,6 +1,17 @@
-FROM public.ecr.aws/docker/library/python:latest
-RUN apt-get update -y --fix-missing
+ARG ai_chip
 
+FROM public.ecr.aws/docker/library/python:latest as base
+RUN apt-get update -y --fix-missing
 RUN python -m pip install wget
 RUN python -m pip install awscli
-RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512.tar.gz -O /model.tar.gz
+
+FROM base AS assets-amd64-cuda
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_cuda.tar.gz -O /model.tar.gz
+ENV VAR=nvidia
+
+FROM base AS assets-amd64-neuron
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_xla.tar.gz -O /model.tar.gz
+ENV VAR=neuron
+
+FROM assets-${ai_chip} AS final
+RUN echo "VAR is equal to ${VAR}"

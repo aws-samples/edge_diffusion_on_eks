@@ -34,11 +34,12 @@ if [[ $instance_type == "inf2."* ]]; then
     exit
   fi
 elif [[ $instance_type == "g5."* ]]; then
-  time /install-pytorch-nvidia.sh
-  time /run-nvidia-model.sh
+  if [[ $STAGE == "compile" ]]; then
+    time /compile-nvidia-model.sh
+  elif [[ $STAGE == "run" ]]; then
+    time /install-pytorch-nvidia.sh
+    time /run-nvidia-model.sh
 else
   echo $instance_type" is not supported"
   exit
 fi
-
-#while true; do sleep 1000; done
