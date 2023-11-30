@@ -15,6 +15,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
   # Activate Python venv 
   . aws_neuron_venv_pytorch_gpu/bin/activate 
   python -m pip install -U pip 
+  python -m pip install gradio
 
   # Install Jupyter notebook kernel
   pip install ipykernel 
@@ -23,7 +24,6 @@ if [ "$(uname -i)" = "x86_64" ]; then
   pip install environment_kernels
 
   # Install PyTorch Neuron
-  #python -m pip install torch-neuron neuron-cc[tensorflow] "protobuf" torchvision
-  pip install -r requirements.txt
+  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow ipython torch -U
   deactivate
 fi

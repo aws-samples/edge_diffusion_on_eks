@@ -35,6 +35,7 @@ if [[ $instance_type == "inf2."* ]]; then
   fi
 elif [[ $instance_type == "g5."* ]]; then
   time /install-pytorch-nvidia.sh
+  time /run-nvidia-model.sh
 else
   echo $instance_type" is not supported"
   exit
