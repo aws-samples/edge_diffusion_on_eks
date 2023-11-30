@@ -15,6 +15,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
   # Activate Python venv 
   . aws_neuron_venv_pytorch_gpu/bin/activate 
   python -m pip install -U pip 
+  python -m pip install gradio
 
   # Install Jupyter notebook kernel
   pip install ipykernel 
