@@ -7,6 +7,7 @@ COPY --from=1 /model.tar.gz /model.tar.gz
 RUN tar -xvzf /model.tar.gz -C /
 
 RUN apt-get update --fix-missing
+RUN apt-get remove -y curl
 RUN apt-get install -y apt-transport-https ca-certificates curl net-tools
 
 #RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
