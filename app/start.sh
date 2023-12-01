@@ -33,7 +33,7 @@ if [[ $instance_type == "inf2."* ]]; then
     echo "stage " $STAGE" is not supported"
     exit
   fi
-elif [[ $instance_type == "g5."* ]]; then
+elif [[ $instance_type == "g"* ]]; then
   if [[ $STAGE == "compile" ]]; then
     time /compile-nvidia-model.sh
   elif [[ $STAGE == "run" ]]; then
