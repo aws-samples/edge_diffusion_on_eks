@@ -132,5 +132,7 @@ Fri Dec  1 16:50:41 2023
 ```
 Note the first GPU core and memory utilization. 
 
+![infer-in-region-on-g5](./infer-in-region-g5.png)
+
 * Deploy node pools on LocalZone
 TBD
