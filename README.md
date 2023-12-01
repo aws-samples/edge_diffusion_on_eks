@@ -75,5 +75,62 @@ Feel the prompt and enjoy the images generated. Note the the processing time. We
 ![neuron-top](./neuron-top.png)
 ![inferenced-image](./infer-in-region.png)
 
+* Deploy inference endpoint with NVIDIA G5 (G4dn is not supported by Stable Diffusion)
+  ```bash
+  kubectl apply -f sd-gpu-serve-deploy.yaml
+  ```
+Wait few minutes for the node provisioning and pod startup and discover the new service
+  ```bash
+  kubectl get svc
+  ```
+e.g., 
+```
+kubectl get svc
+NAME                                                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+kubernetes                                                    ClusterIP   10.100.0.1       <none>        443/TCP          66d
+stablediffusion-serve-gpu-857c86776d-2wpb6-svc-35-90-0-175    NodePort    10.100.117.207   <none>        7860:31071/TCP   9m18s
+stablediffusion-serve-inf-56dbffc68c-zcphj-svc-18-246-11-46   NodePort    10.100.228.62    <none>        7860:32697/TCP   4d17h
+```
+The relevant service is `stablediffusion-serve-gpu-857c86776d-2wpb6-svc-35-90-0-175`. Endpoint is `http://35.90.0.175:31071`
+
+Observe the NVIDIA core usage while generating an image by:
+
+```bash
+watch kubectl exec -it stablediffusion-serve-gpu-857c86776d-2wpb6 -- nvidia-smi
+
+Fri Dec  1 16:50:41 2023       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA A10G                    On  | 00000000:00:1B.0 Off |                    0 |
+|  0%   33C    P0             222W / 300W |   3930MiB / 23028MiB |     99%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  NVIDIA A10G                    On  | 00000000:00:1C.0 Off |                    0 |
+|  0%   16C    P8              18W / 300W |      7MiB / 23028MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   2  NVIDIA A10G                    On  | 00000000:00:1D.0 Off |                    0 |
+|  0%   17C    P8              15W / 300W |      7MiB / 23028MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   3  NVIDIA A10G                    On  | 00000000:00:1E.0 Off |                    0 |
+|  0%   16C    P8               9W / 300W |      7MiB / 23028MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+```
+Note the first GPU core and memory utilization. 
+
 * Deploy node pools on LocalZone
 TBD
