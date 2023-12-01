@@ -7,6 +7,26 @@ You compile and deploy Stable Diffusion 2.1 on EKS in LocalZone to 1/ reduce dep
 
 [build-time] This sample starts with the build pipeline that compiles the PyTorch code into optimized lower level hardware specific code to accelerate inference on GPU and Neuron-enabled instances. This model compiler utilizes neuron(torch_neuronx) or GPU specific features such as mixed precision support, performance optimized kernels, and minimized communication between the CPU and AI accelerator. The output Docker images are stored in regional image registers (ECR) and ready to deploy. We use Volcano, a Kubernetes native batch scheduler, to improve inference pipline orchestration.
 
+The build phase compiles the model and stores it in S3. In [Dockerfile-assets](./app/Dockerfile-assets), models are pulled from S3 and stored as Docker image layers. i.e., neuron model are pulled for Inf2 images and CUDA model pulled for GPU images with the same Dockerfile. Note that using `if` statement in `RUN` section will not cache the model, line `RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz` in our case.
+
+```
+ARG ai_chip
+
+FROM public.ecr.aws/docker/library/python:latest as base
+
+FROM base AS assets-amd64-cuda
+ENV VAR=cuda
+
+FROM base AS assets-amd64-neuron
+ENV VAR=xla
+
+FROM assets-${ai_chip} AS final
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz
+```
+
+Then, the SDK binaries are loaded at the next stage into the relevant [AWS deep-learning containers](https://github.com/aws/deep-learning-containers/blob/master/available_images.md). Specifically, we used:
+`763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-inference:2.0.1-gpu-py310-cu118-ubuntu20.04-ec2` for G5 instances and `763104351884.dkr.ecr.us-east-1.amazonaws.com/huggingface-pytorch-inference-neuronx:1.13.1-transformers4.34.1-neuronx-py310-sdk2.15.0-ubuntu20.04` for Inf2 instances.
+
 [deploy-time] Next, EKS will instanciate the Docker image on EC2 instances launched by Karpenter based on availability, performance and cost policies. The inference endpoint uses a NodePort-based K8s service endpoint behind an EC2 security group. Each available endpoint is published to inference endpoints inventory that is pulled by the user device for ad-hoc inference.  
 
 [run-time] KEDA will control K8s deployment size based on specific AI accelerator usage at run-time. Karpenter terminates unused pods to reclaim compute capacity.
@@ -74,6 +94,65 @@ kubectl exec -it stablediffusion-serve-inf-56dbffc68c-zcphj -- neuron-top
 Feel the prompt and enjoy the images generated. Note the the processing time. We will need that for the LocalZoe case.
 ![neuron-top](./neuron-top.png)
 ![inferenced-image](./infer-in-region.png)
+
+* Deploy inference endpoint with NVIDIA G5 (G4dn is not supported by Stable Diffusion)
+  ```bash
+  kubectl apply -f sd-gpu-serve-deploy.yaml
+  ```
+Wait few minutes for the node provisioning and pod startup and discover the new service
+  ```bash
+  kubectl get svc
+  ```
+e.g., 
+```
+kubectl get svc
+NAME                                                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+kubernetes                                                    ClusterIP   10.100.0.1       <none>        443/TCP          66d
+stablediffusion-serve-gpu-857c86776d-2wpb6-svc-35-90-0-175    NodePort    10.100.117.207   <none>        7860:31071/TCP   9m18s
+stablediffusion-serve-inf-56dbffc68c-zcphj-svc-18-246-11-46   NodePort    10.100.228.62    <none>        7860:32697/TCP   4d17h
+```
+The relevant service is `stablediffusion-serve-gpu-857c86776d-2wpb6-svc-35-90-0-175`. Endpoint is `http://35.90.0.175:31071`
+
+Observe the NVIDIA core usage while generating an image by:
+
+```bash
+watch kubectl exec -it stablediffusion-serve-gpu-857c86776d-2wpb6 -- nvidia-smi
+
+Fri Dec  1 16:50:41 2023       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.54.03              Driver Version: 535.54.03    CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA A10G                    On  | 00000000:00:1B.0 Off |                    0 |
+|  0%   33C    P0             222W / 300W |   3930MiB / 23028MiB |     99%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  NVIDIA A10G                    On  | 00000000:00:1C.0 Off |                    0 |
+|  0%   16C    P8              18W / 300W |      7MiB / 23028MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   2  NVIDIA A10G                    On  | 00000000:00:1D.0 Off |                    0 |
+|  0%   17C    P8              15W / 300W |      7MiB / 23028MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   3  NVIDIA A10G                    On  | 00000000:00:1E.0 Off |                    0 |
+|  0%   16C    P8               9W / 300W |      7MiB / 23028MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
++---------------------------------------------------------------------------------------+
+```
+Note the first GPU core and memory utilization. 
+
+![infer-in-region-on-g5](./infer-in-region-g5.png)
 
 * Deploy node pools on LocalZone
 TBD
