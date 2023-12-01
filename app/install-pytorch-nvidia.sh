@@ -7,7 +7,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
   #kubectl version --client
 
   # Install Python venv 
-  apt-get install -y python3.10-venv g++ 
+  apt-get install -y python3.10-venv g++ gettext-base
 
   # Create Python venv
   python3.10 -m venv aws_neuron_venv_pytorch_gpu
