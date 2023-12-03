@@ -8,6 +8,9 @@ RUN python -m pip install awscli
 FROM base AS assets-amd64-cuda
 ENV VAR=cuda
 
+FROM base AS assets-arm64-cuda
+ENV VAR=cuda
+
 FROM base AS assets-amd64-neuron
 ENV VAR=xla
 
