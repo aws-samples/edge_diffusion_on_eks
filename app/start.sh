@@ -24,10 +24,9 @@ if [[ $instance_type == "inf2."* ]]; then
   echo "export PATH=/opt/aws/neuron/bin:\$PATH" >> /root/.bashrc
   echo "export TERM=screen" >> /root/.bashrc
   . /root/.bashrc
+  time /install-pytorch-neuron.sh
   if [[ $STAGE == "compile" ]]; then
-    time /install-pytorch-neuron.sh
     time /compile-neuron-model.sh
-    time /build.sh
   elif [[ $STAGE == "run" ]]; then
     time /run-neuron-model.sh
   else
@@ -35,10 +34,9 @@ if [[ $instance_type == "inf2."* ]]; then
     exit
   fi
 elif [[ $instance_type == "g"* ]]; then
+  time /install-pytorch-nvidia.sh
   if [[ $STAGE == "compile" ]]; then
     time /compile-nvidia-model.sh
-    time /install-pytorch-nvidia.sh
-    time /build.sh
   elif [[ $STAGE == "run" ]]; then
     time /run-nvidia-model.sh
   else

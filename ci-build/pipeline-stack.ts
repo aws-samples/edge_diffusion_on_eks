@@ -290,24 +290,24 @@ export class PipelineStack extends Stack {
         runOrder: 1,
         project: assets_image_cud_amd_build
       }),
-      new codepipeline_actions.CodeBuildAction({
+      /*new codepipeline_actions.CodeBuildAction({
         actionName: 'AssetsImageCudArmBuild',
         input: sourceOutput,
         runOrder: 1,
         project: assets_image_cud_arm_build
-      }),
+      }),*/
       new codepipeline_actions.CodeBuildAction({
         actionName: 'BaseImageAmdXlaBuild',
         input: sourceOutput,
         runOrder: 2,
         project: base_image_amd_xla_build
       }),
-      new codepipeline_actions.CodeBuildAction({
+      /*new codepipeline_actions.CodeBuildAction({
         actionName: 'BaseImageArmCudBuild',
         input: sourceOutput,
         runOrder: 2,
         project: base_image_arm_cud_build
-      }),
+      }),*/
       new codepipeline_actions.CodeBuildAction({
         actionName: 'BaseImageAmdCudBuild',
         input: sourceOutput,
