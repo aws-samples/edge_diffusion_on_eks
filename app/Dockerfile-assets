@@ -2,10 +2,15 @@ ARG ai_chip
 
 FROM public.ecr.aws/docker/library/python:latest as base
 RUN apt-get update -y --fix-missing
+RUN apt-get install -y python3-venv g++ gettext-base
 RUN python -m pip install wget
 RUN python -m pip install awscli
+RUN python -m pip install gradio
 
 FROM base AS assets-amd64-cuda
+ENV VAR=cuda
+
+FROM base AS assets-arm64-cuda
 ENV VAR=cuda
 
 FROM base AS assets-amd64-neuron
