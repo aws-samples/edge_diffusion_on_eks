@@ -1,10 +1,6 @@
 #!/bin/bash
 
 if [ "$(uname -i)" = "x86_64" ]; then
-
-  # Install Python venv 
-  #apt-get install -y python3-venv g++ 
-
   # Create Python venv
   python -m venv aws_neuron_venv_pytorch_inf 
 
@@ -12,14 +8,10 @@ if [ "$(uname -i)" = "x86_64" ]; then
   . aws_neuron_venv_pytorch_inf/bin/activate 
 
   python -m pip install -U pip 
+  python -m pip install gradio
 
   # Set pip repository pointing to the Neuron repository 
   python -m pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
-
-  # Install wget, awscli
-  #python -m pip install wget
-  #python -m pip install awscli
-  #python -m pip install gradio
 
   # Install Neuron Compiler and Framework
   python -m pip install neuronx-cc==2.* torch-neuronx torchvision
