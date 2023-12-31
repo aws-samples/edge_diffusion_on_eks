@@ -12,8 +12,7 @@ import time
 import copy
 from IPython.display import clear_output
 
-#from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
-from diffusers import DiffusionPipeline
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 import gradio as gr
@@ -87,14 +86,13 @@ def decode_latents(self, latents):
 print("Load the saved model and run itimport",flush=True)
 # --- Load all compiled models ---
 COMPILER_WORKDIR_ROOT = 'sd2_compile_dir_512'
-model_id = "stabilityai/stable-diffusion-2-inpainting"
+model_id = "stabilityai/stable-diffusion-2-1-base"
 text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
 decoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')
 unet_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')
 post_quant_conv_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_post_quant_conv/model.pt')
 
-#pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
-pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
+pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
 pipe = pipe.to("cuda")
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
@@ -113,23 +111,20 @@ prompt = ["a photo of an astronaut riding a horse on mars",
          ]
 
 # First do a warmup run so all the asynchronous loads can finish
-initimage = Image.open('/init_image.png')
-maskimage=Image.open('/mask_image.png')
-image = pipe(prompt=x,image=initimage,mask_image=maskimage).images[0]
+image_warmup = pipe(prompt[0]).images[0]
 
 total_time = 0
 for x in prompt:
     start_time = time.time()
-    image = pipe(prompt=x,image=initimage,mask_image=maskimage).images[0]
-    #image = pipe(x).images[0]
+    image = pipe(x).images[0]
     total_time = total_time + (time.time()-start_time)
     r1 = random.randint(0,99999)
     imgname="image"+str(r1)+".png"
     image.save(imgname)
     image = mpimg.imread(imgname)
     clear_output(wait=True)
-    #plt.imshow(image)
-    #plt.show()
+    plt.imshow(image)
+    plt.show()
 print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 
 def text2img(PROMPT):
@@ -145,6 +140,6 @@ def text2img(PROMPT):
 app = gr.Interface(fn=text2img,
     inputs=["text"],
     outputs = [gr.Image(height=512, width=512), "text"],
-    title = 'Stable Diffusion 2 Inpainting 2.1 on AWS EC2 G5 instance')
+    title = 'Stable Diffusion 2.1 in AWS EC2 G5 instance')
 app.queue()
 app.launch(share = True,server_name="0.0.0.0",debug = False)

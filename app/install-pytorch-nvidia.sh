@@ -11,7 +11,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
 
   pip install environment_kernels
 
-  # Install PyTorch 
-  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow ipython torch -U
+  # Install python packages
+  pip install diffusers transformers accelerate safetensors scipy matplotlib Pillow ipython torch -U
   deactivate
 fi
