@@ -117,7 +117,7 @@ prompt = ["a photo of an astronaut riding a horse on mars",
 # First do a warmup run so all the asynchronous loads can finish
 initimage = Image.open('/init_image.png')
 maskimage=Image.open('/mask_image.png')
-image = pipe(prompt=x,image=initimage,mask_image=maskimage).images[0]
+image = pipe(prompt=prompt[0],image=initimage,mask_image=maskimage).images[0]
 
 total_time = 0
 for x in prompt:
