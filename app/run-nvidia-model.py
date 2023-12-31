@@ -11,6 +11,7 @@ from matplotlib import image as mpimg
 import time
 import copy
 from IPython.display import clear_output
+from PIL import Image
 
 #from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
