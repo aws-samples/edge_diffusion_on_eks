@@ -13,7 +13,7 @@ import copy
 from IPython.display import clear_output
 
 #from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
-from diffusers import DiffusionPipeline
+from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 import gradio as gr
