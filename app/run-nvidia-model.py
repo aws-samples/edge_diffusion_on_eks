@@ -99,7 +99,8 @@ pipe = pipe.to("cuda")
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
 # Replaces StableDiffusionPipeline's decode_latents method with our custom decode_latents method defined above.
-StableDiffusionPipeline.decode_latents = decode_latents
+#StableDiffusionPipeline.decode_latents = decode_latents
+DiffusionPipeline.decode_latents = decode_latents
 
 # Run pipeline
 prompt = ["a photo of an astronaut riding a horse on mars",
@@ -134,6 +135,7 @@ print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 
 def text2img(PROMPT):
     start_time = time.time()
+    #image = pipe(prompt=PROMPT,image=initimage,mask_image=maskimage).images[0]
     image = pipe(PROMPT).images[0]
     total_time =  time.time()-start_time
     r1 = random.randint(0,99999)
