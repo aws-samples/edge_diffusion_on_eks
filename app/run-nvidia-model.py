@@ -119,24 +119,23 @@ prompt = ["a photo of an astronaut riding a horse on mars",
          ]
 
 # First do a warmup run so all the asynchronous loads can finish
-initimage = Image.open('/init_image.png')
-maskimage=Image.open('/mask_image.png')
-image = pipe(prompt=prompt[0],image=initimage,mask_image=maskimage).images[0]
+#initimage = Image.open('/init_image.png')
+#maskimage=Image.open('/mask_image.png')
+#image = pipe(prompt=prompt[0],image=initimage,mask_image=maskimage).images[0]
 
-total_time = 0
-for x in prompt:
-    start_time = time.time()
-    image = pipe(prompt=x,image=initimage,mask_image=maskimage).images[0]
-    #image = pipe(x).images[0]
-    total_time = total_time + (time.time()-start_time)
-    r1 = random.randint(0,99999)
-    imgname="image"+str(r1)+".png"
-    image.save(imgname)
-    image = mpimg.imread(imgname)
-    clear_output(wait=True)
+#total_time = 0
+#for x in prompt:
+#    start_time = time.time()
+#    image = pipe(prompt=x,image=initimage,mask_image=maskimage).images[0]
+#    total_time = total_time + (time.time()-start_time)
+#    r1 = random.randint(0,99999)
+#    imgname="image"+str(r1)+".png"
+#    image.save(imgname)
+#    image = mpimg.imread(imgname)
+#    clear_output(wait=True)
     #plt.imshow(image)
     #plt.show()
-print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
+#print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 
 def text2img(PROMPT):
   start_time = time.time()
