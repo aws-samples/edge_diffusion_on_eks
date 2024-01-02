@@ -155,7 +155,7 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   with torch.no_grad():
     outputs = model(**inputs)
   preds = outputs.logits.unsqueeze(1)
-  filename = f"mask.png"
+  filename = f"/mask.png"
   plt.imsave(filename,torch.sigmoid(preds[0][0]))
   maskimage=PIL.Image.open(filename)
   image = pipe(prompt=result_prompt,image=input_image,mask_image=maskimage).images[0]
@@ -170,7 +170,7 @@ with gr.Blocks() as app:
       result_prompt = gr.Textbox(label="Replace it with?")
       image_output = gr.Image()
     image_button = gr.Button("Generate")
-    print(f'type(input_image={type(input_image)}; source_prompt={source_prompt}; result_prompt={result_prompt}'),flush=True)
+    print(f'type(input_image={type(input_image)}; source_prompt={source_prompt}; result_prompt={result_prompt}',flush=True)
     image_button.click(prompt_paint, inputs=[input_image, source_prompt, result_prompt], outputs=image_output)
   
 app.launch(share = True,server_name="0.0.0.0",debug = True)
