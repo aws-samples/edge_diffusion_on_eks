@@ -13,11 +13,15 @@ import copy
 from IPython.display import clear_output
 from PIL import Image
 
+import requests
+
 #from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 import gradio as gr
+
+from transformers import CLIPSegProcessor, CLIPSegForImageSegmentation
 
 # Compatibility for diffusers<0.18.0
 from packaging import version
@@ -135,19 +139,44 @@ for x in prompt:
 print("Average time: ", np.round((total_time/len(prompt)), 2), "seconds")
 
 def text2img(PROMPT):
-    start_time = time.time()
-    #image = pipe(prompt=PROMPT,image=initimage,mask_image=maskimage).images[0]
-    image = pipe(PROMPT).images[0]
-    total_time =  time.time()-start_time
-    r1 = random.randint(0,99999)
-    imgname="image"+str(r1)+".png"
-    image.save(imgname)
-    image = mpimg.imread(imgname)
-    return image, str(total_time)
+  start_time = time.time()
+  image = pipe(PROMPT).images[0]
+  total_time =  time.time()-start_time
+  r1 = random.randint(0,99999)
+  imgname="image"+str(r1)+".png"
+  image.save(imgname)
+  image = mpimg.imread(imgname)
+  return image, str(total_time)
 
-app = gr.Interface(fn=text2img,
-    inputs=["text"],
-    outputs = [gr.Image(height=512, width=512), "text"],
-    title = 'Stable Diffusion 2 Inpainting 2.1 on AWS EC2 G5 instance')
-app.queue()
-app.launch(share = True,server_name="0.0.0.0",debug = False)
+def prompt_paint(input_image, source_prompt, result_prompt):
+  processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
+  model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined") 
+  inputs = processor(text=source_prompt, images=[input_image] * len(source_prompt), padding="max_length", return_tensors="pt")
+  with torch.no_grad():
+    outputs = model(**inputs)
+  preds = outputs.logits.unsqueeze(1)
+  filename = f"mask.png"
+  plt.imsave(filename,torch.sigmoid(preds[0][0]))
+  maskimage=PIL.Image.open(filename)
+  image = pipe(prompt=result_prompt,image=input_image,mask_image=maskimage).images[0]
+  return image
+
+with gr.Blocks() as app:
+  gr.Markdown("# stable-diffusion-2-inpainting")
+  with gr.Tab("Prompt basic"):
+    with gr.Row():
+      input_image = gr.Image(label = 'Upload your input image', type = 'pil')
+      source_prompt = gr.Textbox(label="What is in the input image you want to change?")
+      result_prompt = gr.Textbox(label="Replace it with?")
+      image_output = gr.Image()
+    image_button = gr.Button("Generate")
+    image_button.click(prompt_paint, inputs=[input_image, source_prompt, result_prompt], outputs=image_output)
+  
+app.launch(share = True,server_name="0.0.0.0",debug = True)
+
+#app = gr.Interface(fn=text2img,
+#    inputs=["text"],
+#    outputs = [gr.Image(height=512, width=512), "text"],
+#    title = 'Stable Diffusion 2 Inpainting 2.1 on AWS EC2 G5 instance')
+#app.queue()
+#app.launch(share = True,server_name="0.0.0.0",debug = False)
