@@ -154,7 +154,7 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
   model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined") 
   prompts = [source_prompt]
-  inputs = processor(text=prompts, images=[manual_image] * len(source_prompt), padding="max_length", return_tensors="pt")
+  inputs = processor(text=prompts, images=[manual_image] * len(prompts), padding="max_length", return_tensors="pt")
   with torch.no_grad():
     outputs = model(**inputs)
   preds = outputs.logits.unsqueeze(1)
