@@ -160,7 +160,7 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   preds = outputs.logits.unsqueeze(1)
   filename = f"/mask.png"
   plt.imsave(filename,torch.sigmoid(preds[0][0]))
-  maskimage=PIL.Image.open(filename)
+  maskimage=Image.open(filename)
   image = pipe(prompt=result_prompt,image=input_image,mask_image=maskimage).images[0]
   return image
 
