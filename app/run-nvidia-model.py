@@ -5,7 +5,7 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from torchvision import transforms
+#from torchvision import transforms
 
 from matplotlib import pyplot as plt
 from matplotlib import image as mpimg
@@ -154,12 +154,12 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   manual_image = Image.open(requests.get(url, stream=True).raw)
   #DEBUG
   #DEBUG need to check
-  transform = transforms.Compose([
-      transforms.ToTensor(),
-      transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-      transforms.Resize((512, 512)),
-  ])
-  img = transform(input_image).unsqueeze(0)
+  #transform = transforms.Compose([
+  #    transforms.ToTensor(),
+  #    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+  #    transforms.Resize((512, 512)),
+  #])
+  #img = transform(input_image).unsqueeze(0)
   #DEBUG need to check
  
   processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
