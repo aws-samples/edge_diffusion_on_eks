@@ -171,7 +171,7 @@ with gr.Blocks() as app:
   with gr.Tab("Prompt basic"):
     with gr.Row():
       input_image = gr.Image(label = 'Upload your input image', type = 'pil')
-      source_prompt = gr.Textbox(label="What is in the input image you want to change?")
+      source_prompt = gr.Textbox(label="What is in the input image you want to change? PLEASE add comma at the end")
       result_prompt = gr.Textbox(label="Replace it with?")
       image_output = gr.Image()
     image_button = gr.Button("Generate")
