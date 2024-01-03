@@ -157,7 +157,7 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   inputs = processor(text=prompts, images=[manual_image] * len(prompts), padding="max_length", return_tensors="pt")
   with torch.no_grad():
     outputs = model(**inputs)
-  preds = outputs.logits.unsqueeze(1)
+  preds = outputs.logits.unsqueeze(0)
   filename = f"/mask.png"
   plt.imsave(filename,torch.sigmoid(preds[0][0]))
   maskimage=Image.open(filename)
