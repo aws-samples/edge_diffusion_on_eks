@@ -149,22 +149,9 @@ def text2img(PROMPT):
   return image, str(total_time)
 
 def prompt_paint(input_image, source_prompt, result_prompt):
-  #DEBUG - remove
-  url = "https://github.com/timojl/clipseg/blob/master/example_image.jpg?raw=true"
-  manual_image = Image.open(requests.get(url, stream=True).raw)
-  #DEBUG
-  #DEBUG need to check
-  #transform = transforms.Compose([
-  #    transforms.ToTensor(),
-  #    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-  #    transforms.Resize((512, 512)),
-  #])
-  #img = transform(input_image).unsqueeze(0)
-  #DEBUG need to check
- 
   processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
   model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined") 
-  prompts = [source_prompt]
+  prompts = source_prompt.split(sep=',')
   inputs = processor(text=prompts, images=[input_image] * len(prompts), padding="max_length", return_tensors="pt")
   with torch.no_grad():
     outputs = model(**inputs)
@@ -175,6 +162,7 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   filename = f"/mask.png"
   plt.imsave(filename,torch.sigmoid(preds[0][0]))
   maskimage=Image.open(filename)
+  print(f'source_prompt={source_prompt};type(source_prompt)={type(source_prompt)};prompts={prompts};type(prompts)={type(prompts)}',flush=True)
   image = pipe(prompt=result_prompt,image=input_image,mask_image=maskimage).images[0]
   return image
 
@@ -187,7 +175,6 @@ with gr.Blocks() as app:
       result_prompt = gr.Textbox(label="Replace it with?")
       image_output = gr.Image()
     image_button = gr.Button("Generate")
-    print(f'source_prompt={source_prompt}; type(source_prompt)={type(source_prompt)}')
     image_button.click(prompt_paint, inputs=[input_image, source_prompt, result_prompt], outputs=image_output)
   
 app.launch(share = True,server_name="0.0.0.0",debug = True)
