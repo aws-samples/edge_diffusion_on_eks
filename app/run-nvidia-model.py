@@ -5,6 +5,7 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
+from torchvision import transforms
 
 from matplotlib import pyplot as plt
 from matplotlib import image as mpimg
@@ -148,15 +149,28 @@ def text2img(PROMPT):
   return image, str(total_time)
 
 def prompt_paint(input_image, source_prompt, result_prompt):
+  #DEBUG - remove
   url = "https://github.com/timojl/clipseg/blob/master/example_image.jpg?raw=true"
   manual_image = Image.open(requests.get(url, stream=True).raw)
-  print(f'type(manual_image)={manual_image};type(input_image)={type(input_image)}; source_prompt={source_prompt}; result_prompt={result_prompt}',flush=True)
+  #DEBUG
+  #DEBUG need to check
+  transform = transforms.Compose([
+      transforms.ToTensor(),
+      transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+      transforms.Resize((512, 512)),
+  ])
+  img = transform(input_image).unsqueeze(0)
+  #DEBUG need to check
+ 
   processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
   model = CLIPSegForImageSegmentation.from_pretrained("CIDAS/clipseg-rd64-refined") 
   prompts = [source_prompt]
-  inputs = processor(text=prompts, images=[manual_image] * len(prompts), padding="max_length", return_tensors="pt")
+  inputs = processor(text=prompts, images=[input_image] * len(prompts), padding="max_length", return_tensors="pt")
   with torch.no_grad():
     outputs = model(**inputs)
+  #DEBUG need to check
+  input_image.convert('RGB').resize((512, 512)).save("/init_image.png", "PNG")
+  #DEBUG need to check
   preds = outputs.logits.unsqueeze(0)
   filename = f"/mask.png"
   plt.imsave(filename,torch.sigmoid(preds[0][0]))
