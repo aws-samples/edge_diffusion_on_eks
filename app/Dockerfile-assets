@@ -2,6 +2,7 @@ ARG model_dir
 ARG ai_chip
 
 FROM public.ecr.aws/docker/library/python:latest as base
+ENV model_dir=$model_dir
 RUN echo "model_dir is equal to ${model_dir}"
 RUN apt-get update -y --fix-missing
 RUN apt-get install -y python3-venv g++ gettext-base
