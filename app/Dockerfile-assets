@@ -18,7 +18,6 @@ FROM base AS assets-amd64-neuron
 ENV VAR=xla
 
 FROM assets-${ai_chip} AS final
-ENV MODEL_DIR=${model_dir}
-RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${MODEL_DIR}_${VAR}.tar.gz -O /model.tar.gz
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${model_dir}_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
-RUN echo "model_dir is equal to ${MODEL_DIR}"
+RUN echo "model_dir is equal to ${model_dir}"
