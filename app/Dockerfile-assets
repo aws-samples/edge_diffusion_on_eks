@@ -1,8 +1,8 @@
 ARG ai_chip
 ARG model_dir
-ENV MODEL_DIR=${model_dir}
 
 FROM public.ecr.aws/docker/library/python:latest as base
+ENV MODEL_DIR=${model_dir}
 RUN apt-get update -y --fix-missing
 RUN apt-get install -y python3-venv g++ gettext-base
 RUN python -m pip install wget
