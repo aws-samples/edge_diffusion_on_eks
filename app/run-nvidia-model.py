@@ -5,7 +5,6 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-#from torchvision import transforms
 
 from matplotlib import pyplot as plt
 from matplotlib import image as mpimg
@@ -92,7 +91,8 @@ def decode_latents(self, latents):
 
 print("Load the saved model and run itimport",flush=True)
 # --- Load all compiled models ---
-COMPILER_WORKDIR_ROOT = 'sd2_compile_dir_512'
+#COMPILER_WORKDIR_ROOT = 'sd2_compile_dir_512'
+COMPILER_WORKDIR_ROOT = 'sd2inpaint_compile_dir'
 model_id = "stabilityai/stable-diffusion-2-inpainting"
 text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
 decoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')

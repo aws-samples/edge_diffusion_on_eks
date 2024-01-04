@@ -1,7 +1,6 @@
 print("imports",flush=True)
 import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
-model_dir=os.environ['MODEL_DIR']
 model_id=os.environ['MODEL_ID']
 
 import torch
@@ -118,7 +117,7 @@ def decode_latents(self, latents):
 
 print("Compile the model into an optimized TorchScript and save the TorchScript",flush=True)
 # For saving compiler artifacts
-COMPILER_WORKDIR_ROOT = model_dir
+COMPILER_WORKDIR_ROOT = 'sd2_compile_dir'
 
 # Model ID for SD version pipeline
 #model_id = "stabilityai/stable-diffusion-2-1-base"
