@@ -1,9 +1,12 @@
 ARG model_dir
 ARG ai_chip
+ARG modeldir
 
 FROM public.ecr.aws/docker/library/python:latest as base
-ENV model_dir=${model_dir}
-RUN echo "model_dir is equal to ${model_dir}"
+ENV model_dir_base=${model_dir}
+ENV modeldirbase=${modeldir}
+RUN echo "model_dir is equal to ${model_dir_base}"
+RUN echo "modeldir is equal to ${modeldirbase}"
 RUN apt-get update -y --fix-missing
 RUN apt-get install -y python3-venv g++ gettext-base
 RUN python -m pip install wget
@@ -11,14 +14,30 @@ RUN python -m pip install awscli
 RUN python -m pip install gradio
 
 FROM base AS assets-amd64-cuda
+ENV model_dir_assets_amd64_cuda=${model_dir}
+ENV modeldirassetsamd64cuda=${modeldir}
+RUN echo "model_dir assets-amd64-cuda is equal to ${model_dir_assets_amd64_cuda}"
+RUN echo "modeldir  assets-amd64-cuda is equal to ${modeldirassetsamd64cuda}"
 ENV VAR=cuda
 
 FROM base AS assets-arm64-cuda
+ENV model_dir_assets_arm64_cuda=${model_dir}
+ENV modeldirassetsarm64cuda=${modeldir}
+RUN echo "model_dir assets-arm64-cuda is equal to ${model_dir_assets_arm64_cuda}"
+RUN echo "modeldir assets-arm64-cuda is equal to ${modeldirassetsarm64cuda}"
 ENV VAR=cuda
 
 FROM base AS assets-amd64-neuron
+ENV model_dir_assets_amd64_xla=${model_dir}
+ENV modeldirassetsamd64xla=${modeldir}
+RUN echo "model_dir assets-amd64-neuron is equal to ${model_dir_assets_amd64_xla}"
+RUN echo "modeldir assets-amd64-neuron is equal to ${modeldirassetsamd64xla}"
 ENV VAR=xla
 
 FROM assets-${ai_chip} AS final
+ENV model_dir_final=${model_dir}
+ENV modeldirfinal=${modeldir}
+RUN echo "model_dir final is equal to ${model_dir_final}"
+RUN echo "modeldir  final is equal to ${modeldirfinal}"
 RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${model_dir}_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
