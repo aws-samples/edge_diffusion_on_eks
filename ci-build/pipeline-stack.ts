@@ -24,6 +24,7 @@ export class PipelineStack extends Stack {
   const GITHUB_USER = new CfnParameter(this,"GITHUBUSER",{type:"String"});
   const GITHUB_REPO = new CfnParameter(this,"GITHUBREPO",{type:"String"});
   const GITHUB_BRANCH = new CfnParameter(this,"GITHUBBRANCH",{type:"String"});
+  const MODEL_DIR = new CfnParameter(this,"MODELDIR",{type:"String"});
   /* uncomment when you test the stack and dont want to manually delete the ecr registry 
   const base_registry = new ecr.Repository(this,`base_repo`,{
     repositoryName:BASE_REPO.valueAsString,
@@ -173,6 +174,7 @@ export class PipelineStack extends Stack {
               `export BASE_REPO="${BASE_REPO.valueAsString}"`,
               `export IMAGE_TAG="${IMAGE_AMD_XLA_TAG.valueAsString}"`,
               `export BASE_IMAGE_TAG="${BASE_IMAGE_AMD_XLA_TAG.valueAsString}"`,
+              `export MODEL_DIR="${MODEL_DIR.valueAsString}"`,
               `cd app`,
               `chmod +x ./build-assets.sh && ./build-assets.sh`
             ],
@@ -205,6 +207,7 @@ export class PipelineStack extends Stack {
               `export BASE_REPO="${BASE_REPO.valueAsString}"`,
               `export IMAGE_TAG="${IMAGE_ARM_CUD_TAG.valueAsString}"`,
               `export BASE_IMAGE_TAG="${BASE_IMAGE_ARM_CUD_TAG.valueAsString}"`,
+              `export MODEL_DIR="${MODEL_DIR.valueAsString}"`,
               `cd app`,
               `chmod +x ./build-assets.sh && ./build-assets.sh`
             ],
@@ -237,6 +240,7 @@ export class PipelineStack extends Stack {
               `export BASE_REPO="${BASE_REPO.valueAsString}"`,
               `export IMAGE_TAG="${IMAGE_AMD_CUD_TAG.valueAsString}"`,
               `export BASE_IMAGE_TAG="${BASE_IMAGE_AMD_CUD_TAG.valueAsString}"`,
+              `export MODEL_DIR="${MODEL_DIR.valueAsString}"`,
               `cd app`,
               `chmod +x ./build-assets.sh && ./build-assets.sh`
             ],

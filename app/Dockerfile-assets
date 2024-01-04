@@ -1,4 +1,5 @@
 ARG ai_chip
+ARG model_dir
 
 FROM public.ecr.aws/docker/library/python:latest as base
 RUN apt-get update -y --fix-missing
@@ -17,5 +18,6 @@ FROM base AS assets-amd64-neuron
 ENV VAR=xla
 
 FROM assets-${ai_chip} AS final
-RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${model_dir}_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
+RUN echo "model_dir is equal to ${model_dir}"

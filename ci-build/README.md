@@ -17,6 +17,7 @@ export BASE_AMD_TAG=amd64
 export GITHUB_BRANCH=master
 export GITHUB_USER=yahavb
 export GITHUB_REPO=edge_diffusion_on_eks
+export MODEL_DIR=sd2_compile_dir
 ```
 
 ```bash

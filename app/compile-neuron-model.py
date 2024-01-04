@@ -1,6 +1,8 @@
 print("imports",flush=True)
 import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
+model_dir=os.environ['MODEL_DIR']
+model_id=os.environ['MODEL_ID']
 
 import torch
 import torch.nn as nn
@@ -14,6 +16,7 @@ import copy
 from IPython.display import clear_output
 
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+#from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 
@@ -115,13 +118,15 @@ def decode_latents(self, latents):
 
 print("Compile the model into an optimized TorchScript and save the TorchScript",flush=True)
 # For saving compiler artifacts
-COMPILER_WORKDIR_ROOT = 'sd2_compile_dir_512'
+COMPILER_WORKDIR_ROOT = model_dir
 
 # Model ID for SD version pipeline
-model_id = "stabilityai/stable-diffusion-2-1-base"
+#model_id = "stabilityai/stable-diffusion-2-1-base"
+#model_id = "stabilityai/stable-diffusion-2-inpainting"
 
 # --- Compile UNet and save ---
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
+#pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
 
 # Replace original cross-attention module with custom cross-attention module for better performance
 if use_new_diffusers:
@@ -167,6 +172,7 @@ del unet_neuron
 
 # Only keep the model being compiled in RAM to minimze memory pressure
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
+#pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
 text_encoder = copy.deepcopy(pipe.text_encoder)
 del pipe
 
@@ -207,6 +213,7 @@ del text_encoder_neuron
 
 # Only keep the model being compiled in RAM to minimze memory pressure
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
+#pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
 decoder = copy.deepcopy(pipe.vae.decoder)
 del pipe
 
@@ -236,6 +243,7 @@ del decoder_neuron
 
 # Only keep the model being compiled in RAM to minimze memory pressure
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
+#pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32)
 post_quant_conv = copy.deepcopy(pipe.vae.post_quant_conv)
 del pipe
 
@@ -257,4 +265,3 @@ torch.jit.save(post_quant_conv_neuron, post_quant_conv_filename)
 # delete unused objects
 del post_quant_conv
 del post_quant_conv_neuron
-
