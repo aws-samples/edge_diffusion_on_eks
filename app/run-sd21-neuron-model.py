@@ -121,11 +121,11 @@ def decode_latents(self, latents):
     return image
 
 
-print("Load the saved model and run itimport",flush=True)
+print("Load the saved model and run it",flush=True)
 # --- Load all compiled models ---
 COMPILER_WORKDIR_ROOT = 'sd2_compile_dir'
 #model_id = "stabilityai/stable-diffusion-2-1-base"
-model_id = "stabilityai/stable-diffusion-2-inpainting"
+#model_id = "stabilityai/stable-diffusion-2-inpainting"
 text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
 decoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')
 unet_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')
@@ -202,12 +202,6 @@ def text2img(PROMPT):
     image = mpimg.imread(imgname)
     return image, str(total_time)
 
-#app = gr.Interface(fn=text2img,
-#    inputs=["text"],
-#    outputs = [gr.Image(height=512, width=512), "text"],
-#    title = 'Stable Diffusion 2.1 in AWS EC2 Inf2 instance')
-#app.queue()
-#app.launch(share = True,server_name="0.0.0.0",debug = False)
 
 def prompt_paint(input_image, source_prompt, result_prompt):
   processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
@@ -225,15 +219,20 @@ def prompt_paint(input_image, source_prompt, result_prompt):
   image = pipe(prompt=result_prompt,image=input_image,mask_image=maskimage).images[0]
   return image
 
-with gr.Blocks() as app:
-  gr.Markdown("# stable-diffusion-2-inpainting")
-  with gr.Tab("Prompt basic"):
-    with gr.Row():
-      input_image = gr.Image(label = 'Upload your input image', type = 'pil')
-      source_prompt = gr.Textbox(label="What is in the input image you want to change? PLEASE add comma at the end")
-      result_prompt = gr.Textbox(label="Replace it with?")
-      image_output = gr.Image()
-    image_button = gr.Button("Generate")
-    image_button.click(prompt_paint, inputs=[input_image, source_prompt, result_prompt], outputs=image_output)
+#with gr.Blocks() as app:
+#  gr.Markdown("# stable-diffusion-2-inpainting")
+#  with gr.Tab("Prompt basic"):
+#    with gr.Row():
+#      input_image = gr.Image(label = 'Upload your input image', type = 'pil')
+#      source_prompt = gr.Textbox(label="What is in the input image you want to change? PLEASE add comma at the end")
+#      result_prompt = gr.Textbox(label="Replace it with?")
+#      image_output = gr.Image()
+#    image_button = gr.Button("Generate")
+#    image_button.click(prompt_paint, inputs=[input_image, source_prompt, result_prompt], outputs=image_output)
 
-app.launch(share = True,server_name="0.0.0.0",debug = True)
+app = gr.Interface(fn=text2img,
+    inputs=["text"],
+    outputs = [gr.Image(height=512, width=512), "text"],
+    title = 'Stable Diffusion 2.1 in AWS EC2 Inf2 instance')
+app.queue()
+app.launch(share = True,server_name="0.0.0.0",debug = False)
