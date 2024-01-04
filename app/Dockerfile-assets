@@ -1,5 +1,5 @@
-ARG ai_chip
 ARG model_dir
+ARG ai_chip
 
 FROM public.ecr.aws/docker/library/python:latest as base
 RUN apt-get update -y --fix-missing
