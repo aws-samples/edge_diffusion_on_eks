@@ -22,4 +22,4 @@ RUN kubectl version --client
 COPY * /
 RUN mkdir /config
 ADD config/main.yaml /config/main.yaml
-RUN tar -xvzf /model.tar.gz -C /
+#RUN tar -xvzf /model.tar.gz -C /
