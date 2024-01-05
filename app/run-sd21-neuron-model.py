@@ -3,6 +3,7 @@ import random
 import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
 model_id=os.environ['MODEL_ID']
+model_dir=os.environ['MODEL_DIR']
 
 import torch
 import torch.nn as nn
@@ -123,7 +124,8 @@ def decode_latents(self, latents):
 
 print("Load the saved model and run it",flush=True)
 # --- Load all compiled models ---
-COMPILER_WORKDIR_ROOT = 'sd2_compile_dir'
+#COMPILER_WORKDIR_ROOT = 'sd2_compile_dir'
+COMPILER_WORKDIR_ROOT = model_dir
 #model_id = "stabilityai/stable-diffusion-2-1-base"
 #model_id = "stabilityai/stable-diffusion-2-inpainting"
 text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
