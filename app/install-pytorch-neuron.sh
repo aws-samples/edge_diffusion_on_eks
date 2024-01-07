@@ -18,7 +18,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
 
   # Install model specific packages
   env TOKENIZERS_PARALLELISM=True #Supresses tokenizer warnings making errors easier to detect
-  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 scipy==1.7.3 matplotlib Pillow ipython -U
+  pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow ipython -U
   #pip install diffusers transformers accelerate safetensors scipy matplotlib Pillow ipython torch -U
   deactivate
 fi
