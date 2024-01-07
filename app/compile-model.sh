@@ -1,5 +1,5 @@
 #!/bin/bash -x
-
+. /root/.bashrc
 . aws_${DEVICE}_venv_pytorch/bin/activate
 python /sd2_512_compile.py
 deactivate
