@@ -27,20 +27,10 @@ fi
 /install-device-pkg.sh
 
 if [[ $STAGE == "compile" ]]; then
-  /compile-neuron-model.sh
+  /compile-model.sh
 elif [[ $STAGE == "run" ]]; then
- /run-neuron-model.sh
+  /run-model.sh
 else
  echo "stage " $STAGE" is not supported"
- exit
-fi
-
-
-if [[ $STAGE == "compile" ]]; then
- /compile-nvidia-model.sh
-elif [[ $STAGE == "run" ]]; then
- /run-nvidia-model.sh
-else
- echo $instance_type" is not supported"
  exit
 fi
