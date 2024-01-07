@@ -20,7 +20,7 @@ else
   echo $instance_type" is not supported, please use one of the instances in "$supported_instances
   exit
 fi
-if [[ $instance_type == "inf2."* ]]; then
+if [[ $instance_type == "inf"* ]]; then
   echo "export PATH=/opt/aws/neuron/bin:\$PATH" >> /root/.bashrc
   echo "export TERM=screen" >> /root/.bashrc
   . /root/.bashrc
