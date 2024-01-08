@@ -1,6 +1,8 @@
 import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
+model_id=os.environ['MODEL_ID']
 device=os.environ["DEVICE"]
+model_dir=os.environ['COMPILER_WORKDIR_ROOT']
 
 import torch
 import torch.nn as nn
@@ -119,8 +121,8 @@ def decode_latents(self, latents):
 StableDiffusionPipeline.decode_latents = decode_latents
 
 # --- Load all compiled models and benchmark pipeline ---
-COMPILER_WORKDIR_ROOT = 'sd2_compile_dir_512'
-model_id = "stabilityai/stable-diffusion-2-1-base"
+COMPILER_WORKDIR_ROOT = model_dir
+#model_id = "stabilityai/stable-diffusion-2-1-base"
 text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
 decoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')
 unet_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')

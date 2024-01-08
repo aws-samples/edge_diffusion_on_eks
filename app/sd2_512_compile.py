@@ -2,6 +2,7 @@ import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
 model_id=os.environ['MODEL_ID']
 device=os.environ["DEVICE"]
+model_dir=os.environ['COMPILER_WORKDIR_ROOT']
 from pathlib import Path
 
 import torch
