@@ -10,13 +10,13 @@ if [ "$(uname -i)" = "x86_64" ]; then
 
   if [ $DEVICE="xla" ]; then
     # Set pip repository pointing to the Neuron repository 
-    #python -m pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
+    python -m pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
 
     # Install Neuron Compiler and Framework
-    #python -m pip install neuronx-cc==2.* torch-neuronx torchvision
+    python -m pip install neuronx-cc==2.* torch-neuronx torchvision
 
     # Install model specific packages
-    #env TOKENIZERS_PARALLELISM=True #Supresses tokenizer warnings making errors easier to detect
+    env TOKENIZERS_PARALLELISM=True #Supresses tokenizer warnings making errors easier to detect
     pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow ipython -U
   elif [ $DEVICE="cuda" ]; then
     pip install environment_kernels
