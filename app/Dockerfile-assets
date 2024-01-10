@@ -1,11 +1,11 @@
 ARG ai_chip
 
 FROM public.ecr.aws/docker/library/python:latest as base
+
 RUN apt-get update -y --fix-missing
 RUN apt-get install -y python3-venv g++ gettext-base
 RUN python -m pip install wget
 RUN python -m pip install awscli
-RUN python -m pip install gradio
 
 FROM base AS assets-amd64-cuda
 ENV VAR=cuda
@@ -17,5 +17,7 @@ FROM base AS assets-amd64-neuron
 ENV VAR=xla
 
 FROM assets-${ai_chip} AS final
-RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz
+ENV model="stable-diffusion-2-1-base"
+RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${model}_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
+RUN echo "model is equal to ${model}"
