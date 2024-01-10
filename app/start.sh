@@ -18,13 +18,12 @@ if [[ $instance_type == "inf"* ]]; then
   echo "export PATH=/opt/aws/neuron/bin:\$PATH" >> /root/.bashrc
   echo "export TERM=screen" >> /root/.bashrc
   echo "export DEVICE=xla" >> /root/.bashrc
-  . /root/.bashrc
 fi
 if [[ $instance_type == "g"* ]]; then
-  echo "export DEVICE=xla" >> /root/.bashrc
-  . /root/.bashrc
+  echo "export DEVICE=cuda" >> /root/.bashrc
 fi
-/install-device-pkg.sh
+. /root/.bashrc
+#/install-device-pkg.sh
 
 if [[ $STAGE == "compile" ]]; then
   /compile-model.sh
