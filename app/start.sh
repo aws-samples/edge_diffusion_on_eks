@@ -23,7 +23,6 @@ if [[ $instance_type == "g"* ]]; then
   echo "export DEVICE=cuda" >> /root/.bashrc
 fi
 . /root/.bashrc
-#/install-device-pkg.sh
 
 if [[ $STAGE == "compile" ]]; then
   /compile-model.sh
