@@ -35,5 +35,28 @@ export class EksClusterStack extends cdk.Stack {
         .addOns(...addOns)
         .useDefaultSecretEncryption(false) // set to false to turn secret encryption off (non-production/demo cases)
         .build(this, cluster_name);
+
+    // Managed Node Group in Local Zone
+    const localNodeGroup = eksBlueprint.addManagedNodegroup('LocalNodeGroup', {
+      minSize: 1,
+      maxSize: 3,
+      instanceTypes: ['t3.small'],
+      subnets: {
+        subnetType: blueprints.SubnetType.PRIVATE_WITH_EGRESS,
+        availabilityZones: [`${region}a`], // Specify the local zone
+      },
+    });
+    // Managed Node Group in Regular Region
+    const regularNodeGroup = eksBlueprint.addManagedNodegroup('RegularNodeGroup', {
+      minSize: 2,
+      maxSize: 4,
+      instanceTypes: ['t3.small'],
+      subnets: {
+        subnetType: blueprints.SubnetType.PRIVATE_WITH_EGRESS,
+        availabilityZones: [`${region}b`], // Specify the regular region
+      },
+    });
+
+
   }
 }
