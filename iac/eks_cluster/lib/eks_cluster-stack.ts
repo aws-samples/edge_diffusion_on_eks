@@ -52,7 +52,7 @@ export class EksClusterStack extends cdk.Stack {
       maxSize: 4,
       instanceTypes: ['g5.xlarge'], //replace if needed 
       subnets: {
-        subnetType: blueprints.SubnetType.PRIVATE_WITH_EGRESS,
+        subnetType: blueprints.SubnetType.PUBLIC,
        
       },
     });
