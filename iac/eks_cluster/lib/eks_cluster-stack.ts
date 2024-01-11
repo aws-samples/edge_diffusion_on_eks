@@ -37,7 +37,7 @@ export class EksClusterStack extends cdk.Stack {
         .build(this, cluster_name);
 
     // Managed Node Group in Local Zone
-    const localNodeGroup = eksBlueprint.addManagedNodegroup('LocalNodeGroup', {
+    const localNodeGroup = EksBlueprint.addManagedNodegroup('LocalNodeGroup', {
       minSize: 1,
       maxSize: 3,
       instanceTypes: ['t3.small'],
@@ -47,7 +47,7 @@ export class EksClusterStack extends cdk.Stack {
       },
     });
     // Managed Node Group in Regular Region
-    const regularNodeGroup = eksBlueprint.addManagedNodegroup('RegularNodeGroup', {
+    const regularNodeGroup = EksBlueprint.addManagedNodegroup('RegularNodeGroup', {
       minSize: 2,
       maxSize: 4,
       instanceTypes: ['t3.small'],
