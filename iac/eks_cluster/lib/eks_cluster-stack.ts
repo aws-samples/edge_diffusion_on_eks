@@ -40,7 +40,7 @@ export class EksClusterStack extends cdk.Stack {
     const localNodeGroup = EksBlueprint.addManagedNodegroup('LocalNodeGroup', {
       minSize: 1,
       maxSize: 3,
-      instanceTypes: ['t3.small'],
+      instanceTypes: ['t3.small'], //replace if needed 
       subnets: {
         subnetType: blueprints.SubnetType.PRIVATE_WITH_EGRESS,
         availabilityZones: [`${region}a`], // Specify the local zone
@@ -50,7 +50,7 @@ export class EksClusterStack extends cdk.Stack {
     const regularNodeGroup = EksBlueprint.addManagedNodegroup('RegularNodeGroup', {
       minSize: 2,
       maxSize: 4,
-      instanceTypes: ['t3.small'],
+      instanceTypes: ['t3.small'], //replace if needed 
       subnets: {
         subnetType: blueprints.SubnetType.PRIVATE_WITH_EGRESS,
         availabilityZones: [`${region}b`], // Specify the regular region
