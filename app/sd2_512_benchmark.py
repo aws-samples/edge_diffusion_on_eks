@@ -158,3 +158,19 @@ if device=='xla':
 prompt = "a photo of an astronaut riding a horse on mars"
 n_runs = 20
 benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
+
+def text2img(PROMPT):
+  start_time = time.time()
+  image = pipe(PROMPT).images[0]
+  total_time =  time.time()-start_time
+  r1 = random.randint(0,99999)
+  imgname="image"+str(r1)+".png"
+  image.save(imgname)
+  image = mpimg.imread(imgname)
+  return image, str(total_time)
+
+app = gr.Interface(fn=text2img,inputs=["text"],
+    outputs = [gr.Image(height=512, width=512), "text"],
+    title = 'Stable Diffusion 2.1 in AWS EC2 ' + device + ' instance')
+app.queue()
+app.launch(share = True,server_name="0.0.0.0",debug = False)
