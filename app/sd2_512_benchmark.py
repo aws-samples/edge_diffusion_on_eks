@@ -4,6 +4,7 @@ model_id=os.environ['MODEL_ID']
 device=os.environ["DEVICE"]
 model_dir=os.environ['COMPILER_WORKDIR_ROOT']
 import gradio as gr
+import random
 import torch
 import torch.nn as nn
 if device=='xla':
