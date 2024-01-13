@@ -34,32 +34,18 @@ Then, the SDK binaries are loaded at the next stage into the relevant [AWS deep-
 ## Setup
 * [Create EKS cluster and deploy Karpenter](https://karpenter.sh/docs/getting-started/getting-started-with-karpenter/) 
 * Use Service Quotas console to allocate Amazon Elastic Compute Cloud (Amazon EC2) "Running On-Demand Inf instances" and "Running On-Demand G and VT instances" limits.
-* Configure NodePools to set Inferentia2 and G EC2 instances constraints 
-  ```bash
-  kubectl apply -f amd-neuron-provisioner.yaml
-  ```
-* Deploy the [Volcano CRD](https://volcano.sh/en/docs/installation/)
-* Deploy [KEDA](https://keda.sh)
-* Deploy [Container Insights on Amazon EKS](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html)
+
 * Deploy [NVIDIA device plugin for Kubernetes](https://github.com/NVIDIA/k8s-device-plugin)
   ```bash
   kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.1/nvidia-device-plugin.yml
   ```
 * Deploy [Neuron device plugin for Kubernetes](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/tutorials/k8s-setup.html#tutorial-k8s-env-setup-for-neuron)
-  ```bash
-  kubectl apply -f k8s-neuron-device-plugin-rbac.yml
-  kubectl apply -f k8s-neuron-device-plugin-ds.yml
-  ```
 
 ## Build multi-arch CPU and accelerator image
 The build process creates OCI images for x86-based instances. You add another build step to create OCI images for Graviton-based instances. This new build process creates a OCI image manifest list that references both OCI images. The container runtime (Docker Engine or containerd) will pull the correct platform-specific image at deployment time. To automate the OCI image build process, we use AWS CodePipeline. AWS CodePipeline starts by building a OCI image from the code in AWS CodeBuild that is pushed to Amazon Elastic Container Registry (Amazon ECR). 
 
 * [Deploy the CI-pipeline of the Stable Diffusion image](./ci-build)
 
-* Create Docker images that supports x86, Gravtion, Neuorn and GPUs (TBD with Volcano pipeline)
-  ```bash
-  kubectl apply -f sd-inf2-compile-job.yaml
-  ```
 ## Deploy the inference pipeline
 * Deploy Karpenter NodePools for Inf2 and G instances
   ```bash
@@ -67,12 +53,20 @@ The build process creates OCI images for x86-based instances. You add another bu
   kubectl apply -f amd-neuorn-provisioner.yaml
   ```
 
-* Deploy KEDA ScaledObject
-TBD
-
-* Deploy inference endpoint in a region
+The model file is stored in S3 between compiling and deploy the model as docker asset image so need to grant access to s3 via k8s service account
   ```bash
-  kubectl apply -f sd-inf2-serve-deploy.yaml
+  kubectl apply -f appsimulator_sa.yaml 
+  ```
+  TBD  - need to set EKS Pod Identities or IRSA
+
+* Compile the model in a region (batch/v1 Job)
+  ```bash
+  kubectl apply -f sd2-512-cuda-compile-job.yaml
+  kubectl apply -f sd2-512-xla-compile-job.yaml
+  ```
+* Deploy the model in a region (apps/v1 Deployment)
+  ```bash
+  kubectl apply -f sd2-512-xla-serve-deploy.yaml
   ```
 
 * Discover the inference endpoint
@@ -97,7 +91,7 @@ Feel the prompt and enjoy the images generated. Note the the processing time. We
 
 * Deploy inference endpoint with NVIDIA G5 (G4dn is not supported by Stable Diffusion)
   ```bash
-  kubectl apply -f sd-gpu-serve-deploy.yaml
+  kubectl apply -f sd2-512-cuda-serve-deploy.yaml
   ```
 Wait few minutes for the node provisioning and pod startup and discover the new service
   ```bash

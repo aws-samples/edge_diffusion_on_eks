@@ -1,18 +1,11 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  labels:
-    app: stablediffusion-serve-gpu
-  name: stablediffusion-serve-gpu
+  name: sd21-gpu-compile
 spec:
-  selector:
-    matchLabels:
-      app: stablediffusion-serve-gpu
   template:
-    metadata:
-      labels:
-        app: stablediffusion-serve-gpu
     spec:
+      restartPolicy: OnFailure
       nodeSelector:
         karpenter.sh/provisioner-name: amd-nvidia
       serviceAccountName: appsimulator
@@ -28,18 +21,21 @@ spec:
           - mountPath: /dev/shm
             name: dshm
         command: ["/start.sh"]
-        args: ["run"]
+        args: ["compile"]
         resources:
           limits:
-            nvidia.com/gpu: "4"
-        lifecycle:
-          postStart:
-            exec:
-              command: ["/create_node_port_svc.sh"]
-          preStop:
-            exec:
-              command: ["/bin/sh","-c","kubectl delete svc `kubectl get svc|grep $POD_NAME | awk '{print $1}'`"]
+            nvidia.com/gpu: 1
         env:
+        - name: DEVICE
+          value: "cuda"
+        - name: BUCKET
+          value: "sdinfer"
+        - name: MODEL_ID
+          value: "stabilityai/stable-diffusion-2-1-base"
+        - name: COMPILER_WORKDIR_ROOT
+          value: "sd2_compile_dir_512"
+        - name: MODEL_FILE
+          value: "stable-diffusion-2-1-base"
         - name: POD_NAME
           valueFrom:
             fieldRef:
