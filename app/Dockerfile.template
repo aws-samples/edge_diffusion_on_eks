@@ -10,6 +10,8 @@ RUN apt-get install -y apt-transport-https ca-certificates net-tools gettext-bas
 RUN python -m pip install wget
 RUN python -m pip install awscli
 RUN python -m pip install gradio
+RUN python -m pip install "uvicorn[standard]"
+RUN python -m pip install fastapi
 
 RUN curl -sS https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg
 RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list

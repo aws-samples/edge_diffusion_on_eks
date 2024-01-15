@@ -9,6 +9,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
     pip install environment_kernels
     pip install diffusers transformers accelerate safetensors matplotlib Pillow ipython torch -U
   fi
-  python /sd2_512_benchmark.py
+  #python /sd2_512_benchmark.py
+  uvicorn run:app
 fi
 while true; do sleep 1000; done
