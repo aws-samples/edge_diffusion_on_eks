@@ -7,6 +7,6 @@ spec:
     inferencepod: $POD_NAME
   ports:
     - protocol: TCP
-      port: 7860
-      targetPort: 7860
+      port: 8000
+      targetPort: 8000
   type: NodePort
