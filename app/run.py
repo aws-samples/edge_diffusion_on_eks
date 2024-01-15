@@ -181,8 +181,10 @@ io = gr.Interface(fn=text2img,inputs=["text"],
 @app.get("/")
 def read_main():
   return {"message": "This is Stable Diffusion 2.1 in AWS EC2 " + device + "instance"}
-@app.get("/benchmark")
-def benchmark():
+@app.get("/load")
+def load():
+  prompt = "a photo of an astronaut riding a horse on mars"
+  n_runs = 20
   report=benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
   return {"message": "benchmark report:"+report}
 app = gr.mount_gradio_app(app, io, path="/serve")
