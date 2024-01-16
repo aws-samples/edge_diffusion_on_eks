@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
+
 ASSETS="-assets"
 export BASE_IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BASE_REPO:$BASE_IMAGE_TAG
 export ASSETS_IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BASE_REPO:$IMAGE_TAG$ASSETS

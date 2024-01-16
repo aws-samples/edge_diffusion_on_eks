@@ -1,16 +1,17 @@
 FROM $BASE_IMAGE as base
 
-FROM $ASSETS_IMAGE AS assets
+#FROM $ASSETS_IMAGE AS assets
 
-FROM base AS model
-COPY --from=1 /model.tar.gz /model.tar.gz
+#FROM base AS model
+#COPY --from=1 /model.tar.gz /model.tar.gz
 
 RUN apt-get update --fix-missing
-RUN apt-get install -y apt-transport-https ca-certificates net-tools gettext-base
+RUN apt-get install -y apt-transport-https ca-certificates net-tools gettext-base python3-venv g++
+RUN python -m pip install wget
+RUN python -m pip install awscli
+RUN python -m pip install gradio
 
-#RUN curl -sS https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg
-COPY apt-key.gpg /
-RUN cat apt-key.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg
+RUN curl -sS https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg
 RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
 
 RUN apt-get update
@@ -19,4 +20,3 @@ RUN kubectl version --client
 COPY * /
 RUN mkdir /config
 ADD config/main.yaml /config/main.yaml
-RUN tar -xvzf /model.tar.gz -C /
