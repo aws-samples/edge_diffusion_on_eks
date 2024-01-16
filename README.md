@@ -32,6 +32,10 @@ Then, the SDK binaries are loaded at the next stage into the relevant [AWS deep-
 [run-time] KEDA will control K8s deployment size based on specific AI accelerator usage at run-time. Karpenter terminates unused pods to reclaim compute capacity.
 
 ## Setup
+* Install CDK k8s 
+```bash
+  npm install -g cdk8s-cli
+```
 * [Create EKS cluster and deploy Karpenter](https://karpenter.sh/docs/getting-started/getting-started-with-karpenter/) 
 * Use Service Quotas console to allocate Amazon Elastic Compute Cloud (Amazon EC2) "Running On-Demand Inf instances" and "Running On-Demand G and VT instances" limits.
 
