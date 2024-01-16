@@ -48,9 +48,10 @@ export class EksClusterStack extends cdk.Stack {
                 desiredSize: 3,
                 minSize: 1,
                 maxSize: 3,
-                machineImageType: MachineImageType.AMAZON_LINUX_2,
+                machineImageType: MachineImageType.BOTTLEROCKET,
                 instanceType: new ec2.InstanceType('g5g.xlarge'),
                 //vpcSubnets
+
                 clusterName: `${cluster_name}`
             }
         )
