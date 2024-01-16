@@ -6,7 +6,7 @@ import {KubernetesVersion, MachineImageType} from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 const version = 'auto';
-const cluster_name = 'eks-edge-cluster';
+const cluster_name = 'edge-inference-cluster';
 
 export class EksClusterStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
@@ -49,7 +49,7 @@ export class EksClusterStack extends cdk.Stack {
                 minSize: 1,
                 maxSize: 3,
                 machineImageType: MachineImageType.AMAZON_LINUX_2,
-                instanceType: new ec2.InstanceType('g5g.large'),
+                instanceType: new ec2.InstanceType('g5g.xlarge'),
                 //vpcSubnets
                 clusterName: `${cluster_name}`
             }
