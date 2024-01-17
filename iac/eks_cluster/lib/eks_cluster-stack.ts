@@ -1,12 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
 import * as blueprints from '@aws-quickstart/eks-blueprints';
-import { GlobalResources } from '@aws-quickstart/eks-blueprints';
-import { VpcResourceProvider } from './vpc_resource_provider';
-import {KubernetesVersion, MachineImageType} from 'aws-cdk-lib/aws-eks';
+import {GlobalResources} from '@aws-quickstart/eks-blueprints';
+import {VpcResourceProvider} from './region_vpc_resource_provider';
+import {CapacityType, KubernetesVersion, MachineImageType} from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import {SubnetType} from "aws-cdk-lib/aws-ec2";
 
 const version = 'auto';
-const cluster_name = 'edge-inference-cluster';
+const cluster_name = 'edge-inference-cluster3';
 
 export class EksClusterStack extends cdk.Stack {
     constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
@@ -15,7 +16,8 @@ export class EksClusterStack extends cdk.Stack {
         const account = this.account;
         const region = this.region;
 
-        const edgeVPC = new VpcResourceProvider();
+        //const edgeVPC = new VpcResourceProvider();
+        const regionVPC = new VpcResourceProvider();
 
         const addOns: Array<blueprints.ClusterAddOn> = [
             new blueprints.addons.MetricsServerAddOn(),
@@ -26,21 +28,22 @@ export class EksClusterStack extends cdk.Stack {
             new blueprints.addons.KubeProxyAddOn()
         ];
 
-        const clusterProvider = new blueprints.AsgClusterProvider(
-            {
-                id: "core",
-                //vpc: edgeVPC.provide().vpcId),
-                version: KubernetesVersion.of("auto"),
-                desiredSize: 3,
-                minSize: 1,
-                maxSize: 3,
-                machineImageType: MachineImageType.AMAZON_LINUX_2,
-                //vpcSubnets
-                clusterName: `${cluster_name}`
-            }
-        )
 
-        const clusterProvider2 = new blueprints.AsgClusterProvider(
+
+        /*const coreNodesProvider = new blueprints.MngClusterProvider(
+            {
+                 id: "core",
+                 version: KubernetesVersion.of("auto"),
+                 desiredSize: 3,
+                 nodeGroupCapacityType: CapacityType.ON_DEMAND,
+                 minSize: 1,
+                 maxSize: 3,
+                 nodeGroupSubnets: { availabilityZones: ['us-west-2a', 'us-west-2b'] },
+                 clusterName: `${cluster_name}`
+             }
+         )*/
+
+        const edgeNodesProvider = new blueprints.AsgClusterProvider(
             {
                 id: "inference",
                 //vpc: edgeVPC.provide().vpcId,
@@ -49,17 +52,19 @@ export class EksClusterStack extends cdk.Stack {
                 minSize: 1,
                 maxSize: 3,
                 machineImageType: MachineImageType.AMAZON_LINUX_2,
-                instanceType: new ec2.InstanceType('g5.xlarge'),
-                //vpcSubnets
+                instanceType: new ec2.InstanceType('g5.4xlarge'),
+                //nodeGroupSubnets: { availabilityZones: ['us-west-2-lax-1a','us-west-2-lax-1b'] },
+                autoScalingGroupName: "edge-nodes-asg",
+                clusterName: `${cluster_name}`,
+                vpcSubnets: [ {subnetType:SubnetType.PUBLIC }],
 
-                clusterName: `${cluster_name}`
             }
-        )
+        );
 
         const stack = blueprints.EksBlueprint.builder()
-            .resourceProvider(GlobalResources.Vpc, edgeVPC)
-            .clusterProvider(clusterProvider)
-            .clusterProvider(clusterProvider2)
+            .resourceProvider(GlobalResources.Vpc, regionVPC)
+            //.clusterProvider(coreNodesProvider)
+            .clusterProvider(edgeNodesProvider)
             .account(account)
             .region(region)
             .version(version)
