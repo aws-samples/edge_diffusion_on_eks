@@ -7,5 +7,5 @@ const app = new cdk.App();
 let stack = process.env.CF_STACK as string;
 
 new EksClusterStack(app,stack,{
-  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+  env: {account: process.env.CDK_DEFAULT_ACCOUNT,region: process.env.CDK_DEFAULT_REGION },
 });
