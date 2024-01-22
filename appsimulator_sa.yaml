@@ -1,0 +1,53 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: appsimulator
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - rbac.authorization.k8s.io
+  - extensions
+  - apps
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  - pods
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: appsimulator
+  namespace: default
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: appsimulator
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: appsimulator
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: appsimulator
+  apiGroup: rbac.authorization.k8s.io

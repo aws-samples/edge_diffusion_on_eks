@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash -x
 
 STAGE=$1
 
@@ -14,33 +14,21 @@ if [ -z "$instance_type" ]; then
 fi
 echo "instance_type="$instance_type
 
-if [[ $instance_type == *"$SUPPORTED_INSTANCES"* ]]; then
-  echo $instance_type" is supported"
-else
-  echo $instance_type" is not supported, please use one of the instances in "$supported_instances
-  exit
-fi
-if [[ $instance_type == "inf2."* ]]; then
+if [[ $instance_type == "inf"* ]]; then
   echo "export PATH=/opt/aws/neuron/bin:\$PATH" >> /root/.bashrc
   echo "export TERM=screen" >> /root/.bashrc
-  . /root/.bashrc
-  time /install-pytorch-neuron.sh
-  if [[ $STAGE == "compile" ]]; then
-    time /compile-neuron-model.sh
-  elif [[ $STAGE == "run" ]]; then
-    time /run-neuron-model.sh
-  else
-    echo "stage " $STAGE" is not supported"
-    exit
-  fi
-elif [[ $instance_type == "g"* ]]; then
-  if [[ $STAGE == "compile" ]]; then
-    time /compile-nvidia-model.sh
-  elif [[ $STAGE == "run" ]]; then
-    time /install-pytorch-nvidia.sh
-    time /run-nvidia-model.sh
-  else
-    echo $instance_type" is not supported"
-    exit
-  fi
+  echo "export DEVICE=xla" >> /root/.bashrc
+fi
+if [[ $instance_type == "g"* ]]; then
+  echo "export DEVICE=cuda" >> /root/.bashrc
+fi
+. /root/.bashrc
+
+if [[ $STAGE == "compile" ]]; then
+  /compile-model.sh
+elif [[ $STAGE == "run" ]]; then
+  /run-model.sh
+else
+ echo "stage " $STAGE" is not supported"
+ exit
 fi
