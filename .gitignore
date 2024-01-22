@@ -2,3 +2,7 @@
 archive
 .github
 .idea
+./infra-build/cdk.out
+./infra-build/node_modules
+./infra-build/cdk.out
+./infra-build/node_modules
