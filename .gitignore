@@ -1,5 +1,5 @@
 .DS_Store
 archive
-package
-cdk
-node_modules
+infra-build/package
+infra-build/cdk
+infra-build/node_modules
