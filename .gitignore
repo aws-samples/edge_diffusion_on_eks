@@ -2,3 +2,5 @@
 infra-build/package*
 infra-build/cdk*
 infra-build/node_modules*
+.github
+.idea
