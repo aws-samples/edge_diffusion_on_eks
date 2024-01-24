@@ -4,3 +4,7 @@ infra-build/cdk*
 infra-build/node_modules*
 .github
 .idea
+./infra-build/cdk.out
+./infra-build/node_modules
+./infra-build/cdk.out
+./infra-build/node_modules

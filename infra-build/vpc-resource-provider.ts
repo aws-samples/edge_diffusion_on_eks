@@ -1,4 +1,3 @@
-import {Stack,StackProps, App} from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import {ResourceContext, ResourceProvider} from "@aws-quickstart/eks-blueprints";
 import {IVpc, SubnetType} from "aws-cdk-lib/aws-ec2";
