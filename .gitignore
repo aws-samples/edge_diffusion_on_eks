@@ -1,5 +1,7 @@
 .DS_Store
-archive
+infra-build/package*
+infra-build/cdk*
+infra-build/node_modules*
 .github
 .idea
 ./infra-build/cdk.out
