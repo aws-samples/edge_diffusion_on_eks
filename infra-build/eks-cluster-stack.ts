@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as blueprints from '@aws-quickstart/eks-blueprints';
 import {GlobalResources} from '@aws-quickstart/eks-blueprints';
-import {VpcResourceProvider} from './vpc-resource-provider';
+import {VpcResourceProvider} from './region_vpc_resource_provider';
 import {EndpointAccess, MachineImageType} from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import {SubnetFilter, SubnetType} from 'aws-cdk-lib/aws-ec2';
@@ -21,12 +21,55 @@ export class EksClusterStack extends cdk.Stack {
 
     const regionVPC = new VpcResourceProvider();
 
+    const karpenterAddOnProps = {
+      requirements: [
+        { key: 'node.kubernetes.io/instance-type', op: 'In', vals: ['g4dn.2xlarge'] },
+        { key: 'topology.kubernetes.io/zone', op: 'In', vals: ['us-west-2-lax-1a', 'us-west-2-lax-1b']},
+        { key: 'kubernetes.io/arch', op: 'In', vals: ['amd64']},
+        { key: 'karpenter.sh/capacity-type', op: 'In', vals: ['on-demand']},
+      ],
+      subnetTags: {
+        "aws-cdk:subnet-type": "Public",
+
+      },
+      securityGroupTags: {
+        "Name": "EksClusterStack/edge-eks-cluster/edge-eks-cluster/inference",
+      },
+      taints: [{
+        key: "core-node",
+        value: "true",
+        effect: "NoSchedule",
+      }],
+      amiFamily: "AL2",
+      amiSelector: {
+        'karpenter.sh/discovery/eks-edge-cluster': '*',
+      },
+      consolidation: { enabled: true },
+      ttlSecondsUntilExpired: 2592000,
+      weight: 20,
+      interruptionHandling: true,
+      tags: {
+        schedule: 'always-on'
+      },
+      blockDeviceMappings: [{
+        deviceName: "/dev/xvda",
+        ebs: {
+          volumeSize: 100,
+          volumeType: ec2.EbsDeviceVolumeType.GP3,
+          deleteOnTermination: true
+        },
+      }],
+    };
+
     const addOns: Array<blueprints.ClusterAddOn> = [
       new blueprints.addons.MetricsServerAddOn(),
       new blueprints.addons.AwsLoadBalancerControllerAddOn(),
       new blueprints.addons.VpcCniAddOn(),
       new blueprints.addons.CoreDnsAddOn(),
       new blueprints.addons.GpuOperatorAddon(),
+      new blueprints.addons.KarpenterAddOn({
+
+      })
 
     ];
 
@@ -56,7 +99,6 @@ export class EksClusterStack extends cdk.Stack {
               minSize: 1,
               maxSize: 3,
               machineImageType: MachineImageType.AMAZON_LINUX_2,
-              //nodeGroupSubnets: {availabilityZones: ['us-west-2-lax-1a', 'us-west-2-lax-1b'],subnetFilters: [SubnetFilter.availabilityZones(['us-west-2-lax-1a', 'us-west-2-lax-1b'])]},
               nodeGroupSubnets: { subnetType: SubnetType.PUBLIC,subnetFilters: [SubnetFilter.availabilityZones(['us-west-2-lax-1a', 'us-west-2-lax-1b'])]},
 
             }
