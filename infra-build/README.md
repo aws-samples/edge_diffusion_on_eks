@@ -7,6 +7,6 @@ npm install -g aws-cdk
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
 export AWS_REGION=us-west-2
-export CF_STACK=cdkk8s
-export CLUSTER=test4
+export CF_STACK=yahavb-cdk-k8s
+export CLUSTER=test2
 ```
