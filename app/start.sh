@@ -28,6 +28,8 @@ if [[ $STAGE == "compile" ]]; then
   /compile-model.sh
 elif [[ $STAGE == "run" ]]; then
   /run-model.sh
+elif [[ $STAGE == "run1" ]]; then
+  /run1-model.sh
 else
  echo "stage " $STAGE" is not supported"
  exit
