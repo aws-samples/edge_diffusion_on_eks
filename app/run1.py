@@ -210,7 +210,7 @@ with gr.Blocks() as app:
       image_button = gr.Button("Generate")
       image_button.click(prompt_paint, inputs=[input_image, source_prompt, result_prompt], outputs=image_output)
 
-app.launch(share = True,server_name="0.0.0.0",debug = True)
+app.launch(share = True,server_name="0.0.0.0",debug = True,server_port=8000)
 #app = FastAPI()
 #io = gr.Interface(fn=text2img,inputs=["text"],
 #    outputs = [gr.Image(height=512, width=512), "text"],
