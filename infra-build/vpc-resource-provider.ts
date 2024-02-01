@@ -8,8 +8,7 @@ export class VpcResourceProvider implements ResourceProvider<IVpc> {
         return new ec2.Vpc(context.scope, 'vpc', {
             ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
             natGateways: 0,
-            availabilityZones: ['us-west-2a','us-west-2b','us-west-2c','us-west-2d'],
-            //availabilityZones: ['us-west-2d','us-west-2b'], 
+            availabilityZones: ['us-west-2a','us-west-2b','us-west-2c','us-west-2d','us-west-2-lax-1a'],
             subnetConfiguration: [ 
               {
                 cidrMask: 26,
