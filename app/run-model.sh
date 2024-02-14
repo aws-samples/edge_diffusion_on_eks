@@ -1,6 +1,5 @@
 #!/bin/bash -x
 
-tar -xzf /app/model.tar.gz 
 pip install --upgrade pip
 if [ "$(uname -i)" = "x86_64" ]; then
   if [ $DEVICE="xla" ]; then
