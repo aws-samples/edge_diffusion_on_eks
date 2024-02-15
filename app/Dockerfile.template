@@ -20,5 +20,3 @@ RUN apt-get update
 RUN apt-get install -y kubectl
 RUN kubectl version --client
 COPY * /
-RUN mkdir /config
-ADD config/main.yaml /config/main.yaml
