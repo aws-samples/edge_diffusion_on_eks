@@ -14,7 +14,7 @@ export BASE_IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BASE_REPO:$
 export ASSETS_IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BASE_REPO:$IMAGE_TAG$ASSETS
 export IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BASE_REPO:$IMAGE_TAG
 
-docker tag $dlc_image_id $IMAGE
+docker tag $dlc_image_id $BASE_IMAGE
 docker images
 
 cat Dockerfile.template | envsubst > Dockerfile
