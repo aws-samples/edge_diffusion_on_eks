@@ -15,6 +15,6 @@ if [ "$(uname -i)" = "x86_64" ]; then
     diffusion_benchmarker t2i --pipeline inductor_t2i pretrained_model_name_or_path=stabilityai/stable-diffusion-2-1 torch_dtype=bfloat16
   fi
   #python /sd2_512_benchmark.py
-  uvicorn run:app --host=0.0.0.0
+  #uvicorn run:app --host=0.0.0.0
 fi
 while true; do sleep 1000; done
