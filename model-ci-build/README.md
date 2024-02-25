@@ -4,7 +4,7 @@
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)
 export AWS_REGION=us-west-2
-export BASE_IMAGE_AMD_XLA_TAG=1.13.1-neuronx-py310-sdk2.14.1-ubuntu20.04
+export BASE_IMAGE_AMD_XLA_TAG=1.13.1-neuronx-py310-sdk2.17.0-ubuntu20.04 
 export BASE_IMAGE_AMD_CUD_TAG=2.0.1-gpu-py310-cu118-ubuntu20.04-ec2
 export BASE_IMAGE_ARM_CUD_TAG=pytorch-inference-graviton-2.1.0-cpu-py310-ubuntu20.04-ec2
 export IMAGE_AMD_XLA_TAG=amd64-neuron
