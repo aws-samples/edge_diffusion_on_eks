@@ -15,8 +15,8 @@ RUN python -m pip install fastapi
 
 #RUN curl -sS https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg
 #RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
-RUN apt-add-repository 'deb http://packages.cloud.google.com/apt/ kubernetes-xenial main'
-RUN apt-get update
+#RUN apt-get update
+RUN curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list apt update
 RUN apt-get install -y kubectl
 RUN kubectl version --client
 COPY * /
