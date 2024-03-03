@@ -28,16 +28,16 @@ DTYPE = torch.bfloat16
 # traced Torchscript.
 def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
-        model_inputs = (model_inputs,)
+        model_inputs=model_inputs
     
-    warmup_run = model(*model_inputs)
+    warmup_run = model(**model_inputs)
 
     latency_collector = LatencyCollector()
     # can't use register_forward_pre_hook or register_forward_hook because StableDiffusionPipeline is not a torch.nn.Module
     
     for _ in range(n_runs):
         latency_collector.pre_hook()
-        res = model(*model_inputs)
+        res = model(**model_inputs)
         latency_collector.hook()
     
     p0_latency_ms = latency_collector.percentile(0) * 1000
@@ -160,7 +160,11 @@ if device=='xla':
 
 prompt = "a photo of an astronaut riding a horse on mars"
 n_runs = 20
-benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
+num_inference_steps = 20
+height = 512
+width = 512
+model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
+benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
 
 def text2img(PROMPT):
   start_time = time.time()
@@ -172,8 +176,8 @@ def text2img(PROMPT):
   image = mpimg.imread(imgname)
   return image, str(total_time)
 
-app = gr.Interface(fn=text2img,inputs=["text"],
-    outputs = [gr.Image(height=512, width=512), "text"],
-    title = 'Stable Diffusion 2.1 in AWS EC2 ' + device + ' instance')
-app.queue()
-app.launch(share = True,server_name="0.0.0.0",debug = False)
+#app = gr.Interface(fn=text2img,inputs=["text"],
+#    outputs = [gr.Image(height=512, width=512), "text"],
+#    title = 'Stable Diffusion 2.1 in AWS EC2 ' + device + ' instance')
+#app.queue()
+#app.launch(share = True,server_name="0.0.0.0",debug = False)

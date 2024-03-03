@@ -1,5 +1,6 @@
 
 * Fork https://github.com/aws-samples/edge_diffusion_on_eks/ and populate the `GITHUB_USER`.
+* Check the latest [DLC](https://github.com/aws/deep-learning-containers/blob/master/available_images.md) for `BASE_IMAGE_AMD_XLA_TAG` and `BASE_IMAGE_AMD_CUD_TAG` values.
 * Export the following variables
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text --query Account)

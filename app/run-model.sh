@@ -10,7 +10,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
   elif [ "$DEVICE" == "cuda" ]; then
     pip install environment_kernels
     pip install diffusers transformers accelerate safetensors matplotlib Pillow ipython torch -U
-    pip install click
+    pip install click nvitop
     pip install /diffusion_benchmarker-0.0.1.tar.gz 
     diffusion_benchmarker t2i --pipeline inductor_t2i pretrained_model_name_or_path=stabilityai/stable-diffusion-2-1 torch_dtype=bfloat16
   fi
