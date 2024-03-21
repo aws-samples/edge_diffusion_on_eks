@@ -187,4 +187,10 @@ def load(n_runs: int):
   #n_runs = 20
   report=benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
   return {"message": "benchmark report:"+report}
+@app.get("/health")
+def healthy():
+  return {"message": "healthy"}
+@app.get("/readiness")
+def ready():
+  return {"message": "ready"}
 app = gr.mount_gradio_app(app, io, path="/serve")
