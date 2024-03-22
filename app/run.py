@@ -1,5 +1,6 @@
 import os
 os.environ["NEURON_FUSE_SOFTMAX"] = "1"
+pod_name=os.environ['POD_NAME']
 model_id=os.environ['MODEL_ID']
 device=os.environ["DEVICE"]
 model_dir=os.environ['COMPILER_WORKDIR_ROOT']
@@ -177,10 +178,10 @@ def text2img(PROMPT):
 app = FastAPI()
 io = gr.Interface(fn=text2img,inputs=["text"],
     outputs = [gr.Image(height=512, width=512), "text"],
-    title = 'Stable Diffusion 2.1 in AWS EC2 ' + device + ' instance')
+    title = 'Stable Diffusion 2.1 pod ' + pod_name + ' in AWS EC2 ' + device + ' instance')
 @app.get("/")
 def read_main():
-  return {"message": "This is Stable Diffusion 2.1 in AWS EC2 " + device + "instance; try /load/{n_runs} or /serve"}
+  return {"message": "This is Stable Diffusion 2.1 pod " + pod_name + " in AWS EC2 " + device + " instance; try /load/{n_runs} or /serve"}
 @app.get("/load/{n_runs}")
 def load(n_runs: int):
   prompt = "a photo of an astronaut riding a horse on mars"
@@ -189,8 +190,8 @@ def load(n_runs: int):
   return {"message": "benchmark report:"+report}
 @app.get("/health")
 def healthy():
-  return {"message": "healthy"}
+  return {"message": pod_name + "is healthy"}
 @app.get("/readiness")
 def ready():
-  return {"message": "ready"}
+  return {"message": pod_name + "is ready"}
 app = gr.mount_gradio_app(app, io, path="/serve")
