@@ -33,7 +33,7 @@ def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
         model_inputs = (model_inputs,)
     
-    warmup_run = model(*model_inputs)
+    warmup_run = model(**model_inputs)
 
     latency_collector = LatencyCollector()
     # can't use register_forward_pre_hook or register_forward_hook because StableDiffusionPipeline is not a torch.nn.Module
@@ -58,7 +58,7 @@ def benchmark(n_runs, test_name, model, model_inputs):
     report_dict["Latency P99"]=f'{p99_latency_ms:.1f}'
     report_dict["Latency P100"]=f'{p100_latency_ms:.1f}'
 
-    report = f'RESULT FOR {test_name}:'
+    report = f'RESULT FOR {test_name} on {pod_name}:'
     for key, value in report_dict.items():
         report += f' {key}={value}'
     print(report)
@@ -163,7 +163,11 @@ if device=='xla':
   pipe.vae.post_quant_conv = NeuronTypeConversionWrapper(torch.jit.load(post_quant_conv_filename))
 
 prompt = "a photo of an astronaut riding a horse on mars"
-n_runs = number_of_runs_per_inference
+num_inference_steps = number_of_runs_per_inference
+height = 512
+width = 512
+model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
+#benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
 #benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
 
 def text2img(PROMPT):
@@ -186,8 +190,12 @@ def read_main():
 @app.get("/load/{n_runs}")
 def load(n_runs: int):
   prompt = "a photo of an astronaut riding a horse on mars"
+  num_inference_steps = number_of_runs_per_inference
+  height = 512
+  width = 512
+  model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
   #n_runs = 20
-  report=benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
+  report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
   return {"message": "benchmark report:"+report}
 @app.get("/health")
 def healthy():
