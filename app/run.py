@@ -162,14 +162,6 @@ if device=='xla':
   pipe.vae.decoder = NeuronTypeConversionWrapper(torch.jit.load(decoder_filename))
   pipe.vae.post_quant_conv = NeuronTypeConversionWrapper(torch.jit.load(post_quant_conv_filename))
 
-prompt = "a photo of an astronaut riding a horse on mars"
-num_inference_steps = number_of_runs_per_inference
-height = 512
-width = 512
-model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
-#benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
-#benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
-
 def text2img(PROMPT):
   start_time = time.time()
   image = pipe(PROMPT).images[0]
@@ -193,8 +185,8 @@ def load(n_runs: int):
   num_inference_steps = int(number_of_runs_per_inference)
   height = 512
   width = 512
-  model_args={'prompt': prompt,'num_inference_steps': num_inference_steps,}
-  #n_runs = 20
+  #model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
+  model_args={'prompt': prompt,}
   report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
   return {"message": "benchmark report:"+report}
 @app.get("/health")
