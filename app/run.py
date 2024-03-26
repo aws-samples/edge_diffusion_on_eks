@@ -186,7 +186,7 @@ def load(n_runs: int):
   height = 512
   width = 512
   #model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
-  model_args={'prompt': prompt,}
+  model_args={'prompt': prompt, 'num_inference_steps': num_inference_steps,}
   report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
   return {"message": "benchmark report:"+report}
 @app.get("/health")
