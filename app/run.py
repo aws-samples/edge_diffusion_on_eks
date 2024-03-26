@@ -193,7 +193,7 @@ def load(n_runs: int):
   num_inference_steps = int(number_of_runs_per_inference)
   height = 512
   width = 512
-  model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
+  model_args={'prompt': prompt,'num_inference_steps': num_inference_steps,}
   #n_runs = 20
   report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
   return {"message": "benchmark report:"+report}
