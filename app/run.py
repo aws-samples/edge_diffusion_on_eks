@@ -190,7 +190,7 @@ def read_main():
 @app.get("/load/{n_runs}")
 def load(n_runs: int):
   prompt = "a photo of an astronaut riding a horse on mars"
-  num_inference_steps = number_of_runs_per_inference
+  num_inference_steps = int(number_of_runs_per_inference)
   height = 512
   width = 512
   model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
