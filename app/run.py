@@ -4,6 +4,7 @@ pod_name=os.environ['POD_NAME']
 model_id=os.environ['MODEL_ID']
 device=os.environ["DEVICE"]
 model_dir=os.environ['COMPILER_WORKDIR_ROOT']
+number_of_runs_per_inference=os.environ['NUM_OF_RUNS_INF']
 import gradio as gr
 from fastapi import FastAPI
 import random
@@ -162,7 +163,7 @@ if device=='xla':
   pipe.vae.post_quant_conv = NeuronTypeConversionWrapper(torch.jit.load(post_quant_conv_filename))
 
 prompt = "a photo of an astronaut riding a horse on mars"
-n_runs = 20
+n_runs = number_of_runs_per_inference
 #benchmark(n_runs, "stable_diffusion_512", pipe, prompt)
 
 def text2img(PROMPT):
