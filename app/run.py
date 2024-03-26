@@ -31,7 +31,7 @@ DTYPE = torch.bfloat16
 # traced Torchscript.
 def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
-        model_inputs = (model_inputs,)
+        model_inputs = model_inputs
     
     warmup_run = model(**model_inputs)
 
