@@ -40,7 +40,7 @@ def benchmark(n_runs, test_name, model, model_inputs):
     
     for _ in range(n_runs):
         latency_collector.pre_hook()
-        res = model(*model_inputs)
+        res = model(**model_inputs)
         latency_collector.hook()
     
     p0_latency_ms = latency_collector.percentile(0) * 1000
@@ -185,8 +185,7 @@ def load(n_runs: int):
   num_inference_steps = int(number_of_runs_per_inference)
   height = 512
   width = 512
-  #model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
-  model_args={'prompt': prompt, 'num_inference_steps': num_inference_steps,}
+  model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
   report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
   return {"message": "benchmark report:"+report}
 @app.get("/health")
