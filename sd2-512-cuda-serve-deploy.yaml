@@ -32,8 +32,10 @@ spec:
         - "-exc"
         - |
           set -x
-          model="stable-diffusion-2-1-base"
-          wget https://sdinfer.s3.us-west-2.amazonaws.com/${model}_xla.tar.gz -O /model/model.tar.gz
+          aws s3 cp s3://sdinfer/stable-diffusion-2-1-base_cuda.tar.gz /model/model.tar.gz
+          cd /model
+          tar -xzf /model/model.tar.gz
+          ls /model 
       containers:
       - name: app
         image: 133573815653.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-cuda
