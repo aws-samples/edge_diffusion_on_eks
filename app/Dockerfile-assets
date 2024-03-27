@@ -20,3 +20,4 @@ ENV model="stable-diffusion-2-1-base"
 #RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${model}_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
 RUN echo "model is equal to ${model}"
+ADD call-model.sh /call-model.sh
