@@ -15,7 +15,7 @@ import torch.nn as nn
 if device=='xla':
   import torch_neuronx
 
-from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler, EulerAncestralDiscreteScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 import time
@@ -138,9 +138,32 @@ post_quant_conv_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_post_quant_c
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
 if device=='cuda':
   pipe = pipe.to("cuda")
+  pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
 
-pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+if device=='xla':
+  pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
+if device=='cuda':
+  pipe.unet.to(memory_format=torch.channels_last)
+  pipe.vae.to(memory_format=torch.channels_last)
+  pipe.unet = torch.compile(pipe.unet, fullgraph=True, mode="max-autotune")
+  
+  pipe.text_encoder = torch.compile(
+    pipe.text_encoder,
+    fullgraph=True,
+    mode="max-autotune",
+  )
+  pipe.vae.decoder = torch.compile(
+    pipe.vae.decoder,
+    fullgraph=True,
+    mode="max-autotune",
+  )
+  pipe.vae.post_quant_conv = torch.compile(
+    pipe.vae.post_quant_conv,
+    fullgraph=True,
+    mode="max-autotune-no-cudagraphs",
+  )
+   
 if device=='xla':
   # Load the compiled UNet onto two neuron cores.
   pipe.unet = NeuronUNet(UNetWrap(pipe.unet))
