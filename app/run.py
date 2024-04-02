@@ -201,11 +201,11 @@ io = gr.Interface(fn=text2img,inputs=["text"],
     title = 'Stable Diffusion 2.1 pod ' + pod_name + ' in AWS EC2 ' + device + ' instance')
 @app.get("/")
 def read_main():
-  return {"message": "This is Stable Diffusion 2.1 pod " + pod_name + " in AWS EC2 " + device + " instance; try /load/{n_runs} or /serve"}
-@app.get("/load/{n_runs}")
-def load(n_runs: int):
+  return {"message": "This is Stable Diffusion 2.1 pod " + pod_name + " in AWS EC2 " + device + " instance; try /load/{n_runs}/infer/{n_inf} or /serve"}
+@app.get("/load/{n_runs}/infer/{n_inf}")
+def load(n_runs: int,n_inf: int):
   prompt = "a photo of an astronaut riding a horse on mars"
-  num_inference_steps = int(number_of_runs_per_inference)
+  num_inference_steps = n_inf
   height = 512
   width = 512
   model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
