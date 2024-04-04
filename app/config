@@ -1,0 +1,4 @@
+[default]
+retry_mode = adaptive
+max_attempts = 10
+region = us-west-2
