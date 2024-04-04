@@ -20,5 +20,12 @@ ENV model="stable-diffusion-2-1-base"
 #RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/${model}_${VAR}.tar.gz -O /model.tar.gz
 RUN echo "VAR is equal to ${VAR}"
 RUN echo "model is equal to ${model}"
+RUN apt-get update
+RUN mkdir -p /etc/apt/keyrings/
+RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+RUN echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+RUN apt-get update
+RUN apt-get install -y kubectl
+RUN kubectl version --client
 ADD call-model.sh /call-model.sh
 ADD appsimulator.sh /appsimulator.sh
