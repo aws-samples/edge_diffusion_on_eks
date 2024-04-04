@@ -21,3 +21,4 @@ ENV model="stable-diffusion-2-1-base"
 RUN echo "VAR is equal to ${VAR}"
 RUN echo "model is equal to ${model}"
 ADD call-model.sh /call-model.sh
+ADD appsimulator.sh /appsimulator.sh
