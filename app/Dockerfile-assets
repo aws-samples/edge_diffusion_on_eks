@@ -12,7 +12,7 @@ RUN kubectl version --client
 RUN python -m pip install wget
 RUN python -m pip install awscli
 RUN mkdir /root/.aws
-COPY config /root/.aws
+ADD config /root/.aws
 
 FROM base AS assets-amd64-cuda
 ENV VAR=cuda
