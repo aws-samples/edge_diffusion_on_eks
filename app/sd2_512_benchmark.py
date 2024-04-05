@@ -12,7 +12,7 @@ import torch.nn as nn
 if device=='xla':
   import torch_neuronx
 
-from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler,EulerAncestralDiscreteScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 
 import time
