@@ -17,4 +17,4 @@ if [ "$(uname -i)" = "x86_64" ]; then
   #python /sd2_512_benchmark.py
   uvicorn run:app --host=0.0.0.0
 fi
-while true; do sleep 1000; done
+#while true; do sleep 1000; done
