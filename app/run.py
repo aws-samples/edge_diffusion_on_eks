@@ -199,6 +199,7 @@ prompt = "a photo of an astronaut riding a horse on mars"
 num_inference_steps = 10
 height = 512
 width = 512
+n_runs = 10
 model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
 report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
 print(f'model warmup {report}')
