@@ -39,7 +39,7 @@ for i in $_seq; do
   fi
   rm -f $sqs_file
   x=`echo $i|awk '{print $1}'`
-  sinx=`echo $i|awk '{print int(sin($1)*100)}'`
+  sinx=`echo $i|awk '{print int(sin($1)*80)}'`
   echo "sinx=" $sinx
   echo "i=" $i
   aws sqs send-message --queue-url ${QUEUE_URL} --message-body "$i"
