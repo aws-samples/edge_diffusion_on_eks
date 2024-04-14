@@ -138,6 +138,7 @@ post_quant_conv_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_post_quant_c
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
 if device=='cuda':
   pipe = pipe.to("cuda")
+  pipe.enable_attention_slicing
   #pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
 
 if device=='xla':
