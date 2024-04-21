@@ -4,12 +4,16 @@ import random
 import gradio as gr
 from matplotlib import image as mpimg
 from fastapi import FastAPI
+import torch
 
 pod_name=os.environ['POD_NAME']
 model_id=os.environ['MODEL_ID']
 device=os.environ["DEVICE"]
 model_dir=os.environ['COMPILER_WORKDIR_ROOT']
 number_of_runs_per_inference=os.environ['NUM_OF_RUNS_INF']
+
+# Define datatype
+DTYPE = torch.bfloat16
 
 if device=='xla':
   from optimum.neuron import NeuronStableDiffusionPipeline
