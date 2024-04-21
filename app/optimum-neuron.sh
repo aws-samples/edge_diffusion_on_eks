@@ -2,13 +2,15 @@
 
 pip install --upgrade pip
 pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
-pip install --upgrade-strategy eager optimum[neuronx]
+pip install "optimum[neuronx, diffusers]"
 optimum-cli export neuron \
-  --model distilbert-base-uncased-finetuned-sst-2-english \
+  --model stabilityai/stable-diffusion-2-1 \
+  --task stable-diffusion \
   --batch_size 1 \
-  --sequence_length 32 \
+  --height 512 \
+  --width 512 \
   --auto_cast matmul \
   --auto_cast_type bf16 \
-  distilbert_base_uncased_finetuned_sst2_english_neuron/
+  sd_neuron_sd_21/
 
 while true; do sleep 1000; done
