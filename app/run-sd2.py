@@ -3,10 +3,6 @@ import random
 import gradio as gr
 from matplotlib import image as mpimg
 from fastapi import FastAPI
-if device=='xla':
-  from optimum.neuron import NeuronStableDiffusionPipeline
-elif device=='cuda':
-  from diffusers import StableDiffusionPipeline
 
 pod_name=os.environ['POD_NAME']
 model_id=os.environ['MODEL_ID']
@@ -14,6 +10,10 @@ device=os.environ["DEVICE"]
 model_dir=os.environ['COMPILER_WORKDIR_ROOT']
 number_of_runs_per_inference=os.environ['NUM_OF_RUNS_INF']
 
+if device=='xla':
+  from optimum.neuron import NeuronStableDiffusionPipeline
+elif device=='cuda':
+  from diffusers import StableDiffusionPipeline
 
 def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
