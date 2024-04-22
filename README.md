@@ -3,11 +3,12 @@ Images, audio, and video content in augmented reality (AR) applications must be 
 
 This example shows how AR app developers can decouple content quality from hardware by hosting models like Stable Diffusion by Stability AI on a chip such as NVIDIA or Neuron-based AI accelerators as close to the user device as possible.  
 
-You compile and deploy Stable Diffusion 2.1 on EKS in LocalZone to 1/ reduce deploy-time by caching 20GB model's graph artifacts on LocalZone with Docker multi-stage. 2/ simplify a secured network path between the user device and remote server with K8s node-port service; and finally 3/ run the model on any compatible and available AI accelerators. 
+You compile and deploy Stable Diffusion 2.1 on EKS in LocalZone to 1/ reduce deploy-time by caching 20GB model's graph artifacts on LocalZone by storing the compiled model on S3 and load it with InitContainer prior the endpoint startup. / simplify a secured network path between the user device and remote server with K8s node-port service; and finally 3/ run the model on any compatible and available AI accelerators.
 
 [build-time] This sample starts with the build pipeline that compiles the PyTorch code into optimized lower level hardware specific code to accelerate inference on GPU and Neuron-enabled instances. This model compiler utilizes neuron(torch_neuronx) or GPU specific features such as mixed precision support, performance optimized kernels, and minimized communication between the CPU and AI accelerator. The output Docker images are stored in regional image registers (ECR) and ready to deploy. We use Volcano, a Kubernetes native batch scheduler, to improve inference pipline orchestration.
 
-The build phase compiles the model and stores it in S3. In [Dockerfile-assets](./app/Dockerfile-assets), models are pulled from S3 and stored as Docker image layers. i.e., neuron model are pulled for Inf2 images and CUDA model pulled for GPU images with the same Dockerfile. Note that using `if` statement in `RUN` section will not cache the model, line `RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz` in our case.
+/*The build phase compiles the model and stores it in S3. In [Dockerfile-assets](./app/Dockerfile-assets), models are pulled from S3 and stored as Docker image layers. i.e., neuron model are pulled for Inf2 images and CUDA model pulled for GPU images with the same Dockerfile. Note that using `if` statement in `RUN` section will not cache the model, line `RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz` in our case.
+
 
 ```
 ARG ai_chip
@@ -23,7 +24,7 @@ ENV VAR=xla
 FROM assets-${ai_chip} AS final
 RUN wget https://sdinfer.s3.us-west-2.amazonaws.com/sd2_compile_dir_512_${VAR}.tar.gz -O /model.tar.gz
 ```
-
+*/
 Then, the SDK binaries are loaded at the next stage into the relevant [AWS deep-learning containers](https://github.com/aws/deep-learning-containers/blob/master/available_images.md). Specifically, we used:
 `763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-inference:2.0.1-gpu-py310-cu118-ubuntu20.04-ec2` for G5 instances and `763104351884.dkr.ecr.us-east-1.amazonaws.com/huggingface-pytorch-inference-neuronx:1.13.1-transformers4.34.1-neuronx-py310-sdk2.15.0-ubuntu20.04` for Inf2 instances.
 
@@ -62,6 +63,11 @@ The model file is stored in S3 between compiling and deploy the model as docker 
   kubectl apply -f appsimulator_sa.yaml 
   ```
   TBD  - need to set EKS Pod Identities or IRSA
+  ```bash
+  aws iam create-policy --policy-name allow-access-to-model-assets --policy-document file://allow-access-to-model-assets.json
+  eksctl create iamserviceaccount --name appsimulator --namespace default --cluster tlvsummit-demo --role-name appsimulator \
+    --attach-policy-arn arn:aws:iam::891377065549:policy/allow-access-to-model-assets --approve
+  ```
 
 * Compile the model in a region (batch/v1 Job)
   ```bash

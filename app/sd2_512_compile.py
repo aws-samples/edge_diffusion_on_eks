@@ -11,7 +11,7 @@ if device=='xla':
   import torch_neuronx
 
 import copy
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline,DPMSolverMultistepScheduler,EulerAncestralDiscreteScheduler
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 # Compatibility for diffusers<0.18.0
 from packaging import version
@@ -109,12 +109,41 @@ COMPILER_WORKDIR_ROOT = 'sd2_compile_dir_512'
 # Model ID for SD version pipeline
 #model_id = "stabilityai/stable-diffusion-2-1-base"
 
-# --- Compile UNet and save ---
 pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
 if device=='cuda':
   pipe = pipe.to("cuda")
-  os.makedirs(os.path.join(COMPILER_WORKDIR_ROOT))
+  pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
+  pipe.unet.to(memory_format=torch.channels_last)
+  pipe.vae.to(memory_format=torch.channels_last)
+  pipe.unet = torch.compile(pipe.unet, fullgraph=True, mode="max-autotune")
+  unet_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')
+  torch.save(pipe.unet.state_dict(), unet_filename) 
 
+  pipe.text_encoder = torch.compile(
+    pipe.text_encoder,
+    fullgraph=True,
+    mode="max-autotune",
+  )
+  text_encoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')
+  torch.save(pipe.text_encoder.state_dict(), text_encoder_filename)
+  
+  pipe.vae.decoder = torch.compile(
+    pipe.vae.decoder,
+    fullgraph=True,
+    mode="max-autotune",
+  )
+  decoder_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')
+  torch.save(pipe.vae.decoder.state_dict(), decoder_filename)  
+
+  pipe.vae.post_quant_conv = torch.compile(
+    pipe.vae.post_quant_conv,
+    fullgraph=True,
+    mode="max-autotune-no-cudagraphs",
+  )
+  post_quant_conv_filename = os.path.join(COMPILER_WORKDIR_ROOT, 'vae_post_quant_conv/model.pt')
+  torch.save(pipe.vae.post_quant_conv.state_dict(), post_quant_conv_filename)
+
+# --- Compile UNet and save ---
 # Replace original cross-attention module with custom cross-attention module for better performance
 if use_new_diffusers:
     Attention.get_attention_scores = get_attention_scores
@@ -154,11 +183,6 @@ if device=='xla':
   # delete unused objects
   del unet
   del unet_neuron
-
-if device=='cuda':
-  os.makedirs(os.path.join(COMPILER_WORKDIR_ROOT,'unet'))
-  Path(os.path.join(COMPILER_WORKDIR_ROOT, 'unet/model.pt')).touch()
-
 
 # --- Compile CLIP text encoder and save ---
 
@@ -202,10 +226,6 @@ if device=='xla':
   del text_encoder
   del text_encoder_neuron
 
-if device=='cuda':
-  os.makedirs(os.path.join(COMPILER_WORKDIR_ROOT,'text_encoder'))
-  Path(os.path.join(COMPILER_WORKDIR_ROOT, 'text_encoder/model.pt')).touch()
-
 # --- Compile VAE decoder and save ---
 
 # Only keep the model being compiled in RAM to minimze memory pressure
@@ -234,11 +254,6 @@ if device=='xla':
   del decoder
   del decoder_neuron
 
-if device=='cuda':
-  os.makedirs(os.path.join(COMPILER_WORKDIR_ROOT,'vae_decoder'))
-  Path(os.path.join(COMPILER_WORKDIR_ROOT, 'vae_decoder/model.pt')).touch()
-
-
 # --- Compile VAE post_quant_conv and save ---
 
 # Only keep the model being compiled in RAM to minimze memory pressure
@@ -266,6 +281,3 @@ if device=='xla':
   del post_quant_conv
   del post_quant_conv_neuron
 
-if device=='cuda':
-  os.makedirs(os.path.join(COMPILER_WORKDIR_ROOT,'vae_post_quant_conv'))
-  Path(os.path.join(COMPILER_WORKDIR_ROOT, 'vae_post_quant_conv/model.pt')).touch()

@@ -29,7 +29,7 @@ export class PipelineStack extends Stack {
     repositoryName:BASE_REPO.valueAsString,
     imageScanOnPush: true
   });
-  */
+  */ 
   const base_registry = ecr.Repository.fromRepositoryName(this,`base_repo`,BASE_REPO.valueAsString)
 
   //create a roleARN for codebuild 

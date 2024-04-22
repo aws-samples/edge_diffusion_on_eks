@@ -16,6 +16,7 @@ spec:
       nodeSelector:
         karpenter.sh/provisioner-name: amd-neuron
       serviceAccountName: appsimulator
+      schedulerName: my-scheduler
       volumes:
       - name: dshm
         emptyDir:
@@ -32,8 +33,10 @@ spec:
         - "-exc"
         - |
           set -x
-          model="stable-diffusion-2-1-base"
-          wget https://sdinfer.s3.us-west-2.amazonaws.com/${model}_xla.tar.gz -O /model/model.tar.gz
+          aws s3 cp s3://sdinfer/stable-diffusion-2-1-base.tar.gz /model/model.tar.gz
+          cd /model
+          tar -xzf /model/model.tar.gz
+          ls -l
       containers:
       - name: app
         image: 133573815653.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-neuron
@@ -47,7 +50,7 @@ spec:
         args: ["run"]
         resources:
           limits:
-            aws.amazon.com/neuron: 6
+            aws.amazon.com/neuron: 1
         lifecycle:
           postStart:
             exec:
@@ -57,7 +60,7 @@ spec:
               command: ["/bin/sh","-c","kubectl delete svc `kubectl get svc|grep $POD_NAME | awk '{print $1}'`"]
         env:
         - name: AWS_NEURON_VISIBLE_DEVICES
-          value: "ALL"
+          value: "2-3"
         - name: DEVICE
           value: "xla"
         - name: BUCKET
@@ -65,7 +68,7 @@ spec:
         - name: MODEL_ID
           value: "stabilityai/stable-diffusion-2-1-base"
         - name: COMPILER_WORKDIR_ROOT
-          value: "sd2_compile_dir_512"
+          value: "/app/sd2_compile_dir_512"
         - name: MODEL_FILE
           value: "stable-diffusion-2-1-base"
         - name: POD_NAME
