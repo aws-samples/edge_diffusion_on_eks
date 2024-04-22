@@ -21,7 +21,7 @@ if device=='xla':
 elif device=='cuda':
   from diffusers import StableDiffusionPipeline
 
-def benchmark(n_runs, test_name, model, model_inputs):
+def benchmark(n_runs, test_name, model, model_inputs, compiler_args):
     if not isinstance(model_inputs, tuple):
         model_inputs = model_inputs
 
@@ -80,6 +80,7 @@ if device=='xla':
 elif device=='cuda':
   pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
   pipe = pipe.to("cuda")
+  pipe.enable_attention_slicing
 
 def text2img(prompt):
   start_time = time.time()
@@ -93,8 +94,6 @@ def text2img(prompt):
 
 #warmup
 prompt = "a photo of an astronaut riding a horse on mars"
-height=512
-width=512
 num_inference_steps=2
 model_args={'prompt': prompt,'num_inference_steps': num_inference_steps,}
 image = pipe(**model_args).images[0]
@@ -112,9 +111,6 @@ def read_main():
 def load(n_runs: int,n_inf: int):
   prompt = "a photo of an astronaut riding a horse on mars"
   num_inference_steps = n_inf
-  height = 512
-  width = 512
-  #model_args={'prompt': prompt, 'height': height, 'width': width, 'num_inference_steps': num_inference_steps,}
   model_args={'prompt': prompt,'num_inference_steps': num_inference_steps,}
   report=benchmark(n_runs, "stable_diffusion_512", pipe, model_args)
   return {"message": "benchmark report:"+report}
