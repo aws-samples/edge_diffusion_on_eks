@@ -21,7 +21,7 @@ if device=='xla':
 elif device=='cuda':
   from diffusers import StableDiffusionPipeline
 
-def benchmark(n_runs, test_name, model, model_inputs, compiler_args):
+def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
         model_inputs = model_inputs
 
