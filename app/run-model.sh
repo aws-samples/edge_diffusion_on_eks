@@ -15,6 +15,7 @@ if [ "$(uname -i)" = "x86_64" ]; then
     #pip install /diffusion_benchmarker-0.0.1.tar.gz 
     #diffusion_benchmarker t2i --pipeline inductor_t2i pretrained_model_name_or_path=stabilityai/stable-diffusion-2-1 torch_dtype=bfloat16
   fi
-  uvicorn run:app --host=0.0.0.0
+  #uvicorn run:app --host=0.0.0.0
+  uvicorn run-sd2:app --host=0.0.0.0
 fi
 #while true; do sleep 1000; done

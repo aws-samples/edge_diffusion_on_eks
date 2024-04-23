@@ -8,7 +8,7 @@ width=int(os.environ['WIDTH'])
 batch_size=int(os.environ['BATCH_SIZE'])
 from optimum.neuron import NeuronStableDiffusionPipeline
 
-compiler_args = {"auto_cast": "matmul", "auto_cast_type": "bf16"}
+compiler_args = {"auto_cast": "matmul", "auto_cast_type": "bf16","inline_weights_to_neff": "True"}
 input_shapes = {"batch_size": batch_size, "height": height, "width": width}
 stable_diffusion = NeuronStableDiffusionPipeline.from_pretrained(model_id, export=True, **compiler_args, **input_shapes)
 stable_diffusion.save_pretrained(model_dir)
