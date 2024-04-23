@@ -2,7 +2,7 @@
 pip install --upgrade pip
 if [ "$(uname -i)" = "x86_64" ]; then
   if [ "$DEVICE" == "xla" ]; then
-    #pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
+    pip config set global.extra-index-url https://pip.repos.neuron.amazonaws.com
     pip install "optimum[neuronx, diffusers]"
     #pip install diffusers==0.20.2 transformers==4.33.1 accelerate==0.22.0 safetensors==0.3.1 matplotlib Pillow ipython -U      
     #pip install click
