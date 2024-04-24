@@ -19,7 +19,7 @@ DTYPE = torch.bfloat16
 if device=='xla':
   from optimum.neuron import NeuronStableDiffusionPipeline
 elif device=='cuda':
-  from diffusers import StableDiffusionPipeline
+  from diffusers import StableDiffusionPipeline, EulerAncestralDiscreteScheduler
 
 def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
