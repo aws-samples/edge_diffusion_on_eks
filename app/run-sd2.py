@@ -100,7 +100,7 @@ elif device=='cuda':
   pipe.vae.post_quant_conv = torch.compile(
     pipe.vae.post_quant_conv,
     fullgraph=True,
-    mode="max-autotune-no-cudagraphs",
+    mode="max-autotune",
   )
 
 def text2img(prompt):
