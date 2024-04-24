@@ -19,7 +19,7 @@ DTYPE = torch.bfloat16
 if device=='xla':
   from optimum.neuron import NeuronStableDiffusionPipeline
 elif device=='cuda':
-  from diffusers import StableDiffusionPipeline
+  from diffusers import StableDiffusionPipeline, EulerAncestralDiscreteScheduler
 
 def benchmark(n_runs, test_name, model, model_inputs):
     if not isinstance(model_inputs, tuple):
@@ -81,6 +81,27 @@ elif device=='cuda':
   pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=DTYPE)
   pipe = pipe.to("cuda")
   pipe.enable_attention_slicing
+  pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
+
+  pipe.unet.to(memory_format=torch.channels_last)
+  pipe.vae.to(memory_format=torch.channels_last)
+  pipe.unet = torch.compile(pipe.unet, fullgraph=True, mode="max-autotune")
+
+  pipe.text_encoder = torch.compile(
+    pipe.text_encoder,
+    fullgraph=True,
+    mode="max-autotune",
+  )
+  pipe.vae.decoder = torch.compile(
+    pipe.vae.decoder,
+    fullgraph=True,
+    mode="max-autotune",
+  )
+  pipe.vae.post_quant_conv = torch.compile(
+    pipe.vae.post_quant_conv,
+    fullgraph=True,
+    mode="max-autotune-no-cudagraphs",
+  )
 
 def text2img(prompt):
   start_time = time.time()
